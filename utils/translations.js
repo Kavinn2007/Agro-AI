@@ -1,0 +1,346 @@
+export const translations = {
+  en: {
+    // Navbar
+    nav_home: 'Home',
+    nav_about: 'About',
+    nav_features: 'Features',
+    nav_how: 'How It Works',
+    nav_contact: 'Contact',
+    nav_login: 'Login',
+    nav_signup: 'Sign in',
+    nav_dashboard: 'Dashboard',
+    nav_logout: 'Logout',
+
+    // Hero
+    hero_badge: 'AI-Powered Agriculture',
+    hero_title_1: 'Smart Farming',
+    hero_title_2: 'Starts Here',
+    hero_subtitle: 'Upload your crop image and get instant disease detection, remedies, and prevention tips using AI',
+    hero_cta: 'Get Started',
+    hero_demo: 'Try Demo',
+
+    // Demo
+    demo_title: 'Demo: AI Crop Analysis',
+    demo_disease: 'Late Blight',
+    demo_symptoms: 'Dark brown spots on leaves, white mold on undersides, rapidly spreading lesions that can destroy foliage within days.',
+    demo_remedy: 'Apply copper-based fungicide immediately. Remove and destroy affected leaves. Avoid overhead irrigation.',
+    demo_prevention: 'Use disease-resistant varieties. Ensure proper spacing for air circulation. Apply preventive fungicide before rainy season. Rotate crops annually.',
+    demo_confidence: '94% Confidence',
+
+    // About
+    about_title: 'About AgroAI',
+    about_subtitle: 'Empowering farmers with artificial intelligence',
+    about_p1: 'AgroAI is an AI-powered agricultural assistant designed specifically for small farmers. Our mission is to make advanced crop disease detection accessible to every farmer, regardless of their technical knowledge.',
+    about_p2: 'Using cutting-edge artificial intelligence and computer vision technology, AgroAI can instantly analyze crop images to identify diseases, provide remedies, and offer prevention tips — all in simple, easy-to-understand language.',
+    about_p3: 'We believe that technology should serve those who feed the world. By bridging the gap between AI and agriculture, we help farmers protect their crops, reduce losses, and improve yields.',
+
+    // Features
+    features_title: 'Powerful Features',
+    features_subtitle: 'Everything you need for smarter farming',
+    feature_1_title: 'Disease Detection',
+    feature_1_desc: 'Upload a crop image and get instant AI-powered disease identification with high accuracy.',
+    feature_2_title: 'AI Remedies',
+    feature_2_desc: 'Receive clear, farmer-friendly remedy suggestions and prevention tips for detected diseases.',
+    feature_3_title: 'Seasonal Advice',
+    feature_3_desc: 'Get timely seasonal crop advice and best practices for your farming needs.',
+    feature_4_title: 'Multi-Language',
+    feature_4_desc: 'Access all features in English and Tamil for better understanding and accessibility.',
+    feature_5_title: 'Dashboard & History',
+    feature_5_desc: 'Track all your past uploads and results in a comprehensive, easy-to-use dashboard.',
+    feature_6_title: 'Smart Notifications',
+    feature_6_desc: 'Receive timely alerts, farming tips, and important updates to stay informed.',
+
+    // How It Works
+    how_title: 'How It Works',
+    how_subtitle: 'Get results in 4 simple steps',
+    step_1_title: 'Upload Image',
+    step_1_desc: 'Take a photo of your crop and upload it to AgroAI. We accept all common image formats.',
+    step_2_title: 'AI Analysis',
+    step_2_desc: 'Our advanced AI analyzes the image to detect any diseases, pests, or abnormalities.',
+    step_3_title: 'Get Results',
+    step_3_desc: 'Receive detailed results including disease name, symptoms, remedy, and prevention tips.',
+    step_4_title: 'View History',
+    step_4_desc: 'Access your past results anytime from your dashboard. Track patterns and improvements.',
+
+    // Contact
+    contact_title: 'Contact Us',
+    contact_subtitle: 'We\'d love to hear from you',
+    contact_name: 'Your Name',
+    contact_email: 'Email Address',
+    contact_message: 'Your Message',
+    contact_send: 'Send Message',
+    contact_success: 'Message sent successfully! We\'ll get back to you soon.',
+
+    // Auth
+    login_title: 'Welcome Back',
+    login_subtitle: 'Sign in to your account',
+    signup_title: 'Create Account',
+    signup_subtitle: 'Join AgroAI and start protecting your crops',
+    auth_email: 'Email Address',
+    auth_password: 'Password',
+    auth_confirm: 'Confirm Password',
+    auth_name: 'Full Name',
+    auth_login: 'Sign In',
+    auth_signup: 'Create Account',
+    auth_no_account: 'Don\'t have an account?',
+    auth_has_account: 'Already have an account?',
+    auth_signup_link: 'Sign in',
+    auth_login_link: 'Login',
+
+    // Dashboard
+    dash_upload: 'Upload & Analyze',
+    dash_history: 'History',
+    dash_notifications: 'Notifications',
+    dash_advice: 'Crop Advice',
+    dash_upload_title: 'Upload Image',
+    dash_upload_desc: 'Take a photo or select an image for AI analysis',
+    dash_upload_btn: 'Click to upload or drag & drop',
+    dash_upload_hint: 'Supports JPG, PNG, WEBP (Max 10MB)',
+    dash_analyze: 'Analyze with AI',
+    dash_analyzing: 'Analyzing...',
+    dash_history_title: 'Analysis History',
+    dash_history_desc: 'View your past crop analysis results',
+    dash_notif_title: 'Notifications',
+    dash_notif_desc: 'Stay updated with alerts and tips',
+    dash_advice_title: 'Seasonal & Crop Advice',
+    dash_advice_desc: 'Expert farming tips and seasonal guidance',
+    dash_no_history: 'No analysis history yet',
+    dash_no_history_desc: 'Upload a crop image to get started',
+    dash_no_notif: 'No notifications yet',
+    dash_no_notif_desc: 'You\'ll receive alerts and tips here',
+
+    // Results
+    result_disease: 'Disease Detected',
+    result_symptoms: 'Symptoms',
+    result_remedy: 'Remedy',
+    result_prevention: 'Prevention Tips',
+    result_healthy: 'Healthy Crop',
+    result_healthy_msg: 'Your crop appears to be healthy! No diseases detected.',
+    result_not_crop: 'Crop Not Detected',
+    result_not_crop_msg: 'We could not detect a valid plant leaf in this image. Please ensure you take a clear photo of the crop.',
+    result_uncertain: 'Uncertain Result',
+    result_uncertain_msg: 'The AI is not confident about this result. Please capture a clearer or closer image of the affected area.',
+    result_multi_leaf: 'Multiple leaves detected. Analyzing the most prominent leaf.',
+
+    // Footer
+    footer_tagline: 'Transforming Agriculture with Intelligence',
+    footer_nav: 'Navigation',
+    footer_resources: 'Resources',
+    footer_legal: 'Legal',
+    footer_privacy: 'Privacy Policy',
+    footer_terms: 'Terms of Service',
+    footer_faq: 'FAQ',
+    footer_support: 'Support',
+    footer_rights: '© 2026 AgroAI. All rights reserved.',
+
+    // Testimonials
+    testimonial_title: 'What Farmers Say',
+    testimonial_subtitle: 'Real stories from real farmers',
+    testimonial_1: '"AgroAI helped me identify a disease in my tomato plants before it spread to the entire field. The remedy suggestion saved my harvest!"',
+    testimonial_1_name: 'Rajan Kumar',
+    testimonial_1_role: 'Rice & Vegetable Farmer',
+    testimonial_2: '"I used to lose 30% of my crops to diseases. Since using AgroAI, my losses have reduced dramatically. It\'s like having an expert in my pocket."',
+    testimonial_2_name: 'Lakshmi Devi',
+    testimonial_2_role: 'Small-scale Farmer',
+    testimonial_3: '"The Tamil language support makes it so easy for me to understand the results. AgroAI truly cares about farmers like us."',
+    testimonial_3_name: 'Murugan S.',
+    testimonial_3_role: 'Paddy Farmer',
+
+    // Benefits
+    benefits_title: 'Benefits',
+    benefits_subtitle: 'Why farmers choose AgroAI',
+    benefit_1_title: 'Save Your Crops',
+    benefit_1_desc: 'Early detection and timely treatment to prevent crop losses.',
+    benefit_2_title: 'Save Money',
+    benefit_2_desc: 'Reduce unnecessary pesticide use with targeted remedies.',
+    benefit_3_title: 'Easy to Use',
+    benefit_3_desc: 'Simple interface designed for farmers with minimal technical knowledge.',
+    benefit_4_title: 'Always Available',
+    benefit_4_desc: 'Access AI-powered diagnosis 24/7 from your phone.',
+  },
+
+  ta: {
+    // Navbar
+    nav_home: 'முகப்பு',
+    nav_about: 'எங்களைப் பற்றி',
+    nav_features: 'அம்சங்கள்',
+    nav_how: 'எப்படி செயல்படுகிறது',
+    nav_contact: 'தொடர்பு',
+    nav_login: 'உள்நுழைய',
+    nav_signup: 'பதிவு செய்ய',
+    nav_dashboard: 'டாஷ்போர்டு',
+    nav_logout: 'வெளியேறு',
+
+    // Hero
+    hero_badge: 'AI மூலம் இயங்கும் வேளாண்மை',
+    hero_title_1: 'ஸ்மார்ட் விவசாயம்',
+    hero_title_2: 'இங்கே தொடங்குகிறது',
+    hero_subtitle: 'உங்கள் பயிர் படத்தை பதிவேற்றி, AI மூலம் உடனடி நோய் கண்டறிதல், தீர்வுகள் மற்றும் தடுப்பு குறிப்புகளைப் பெறுங்கள்',
+    hero_cta: 'தொடங்குங்கள்',
+    hero_demo: 'டெமோ பார்க்க',
+
+    // Demo
+    demo_title: 'டெமோ: AI பயிர் பகுப்பாய்வு',
+    demo_disease: 'தாமதமான கருகல்',
+    demo_symptoms: 'இலைகளில் அடர் பழுப்பு புள்ளிகள், அடிப்பகுதியில் வெள்ளை பூஞ்சை, சில நாட்களில் இலைகளை அழிக்கும் வேகமாக பரவும் புண்கள்.',
+    demo_remedy: 'உடனடியாக செம்பு அடிப்படையிலான பூஞ்சைக்கொல்லியை பயன்படுத்தவும். பாதிக்கப்பட்ட இலைகளை அகற்றி அழிக்கவும்.',
+    demo_prevention: 'நோய் எதிர்ப்பு ரகங்களை பயன்படுத்தவும். காற்று சுழற்சிக்கு சரியான இடைவெளி உறுதி செய்யவும். மழைக்காலத்திற்கு முன் தடுப்பு பூஞ்சைக்கொல்லி பயன்படுத்தவும்.',
+    demo_confidence: '94% நம்பகத்தன்மை',
+
+    // About
+    about_title: 'அக்ரோAI பற்றி',
+    about_subtitle: 'செயற்கை நுண்ணறிவு மூலம் விவசாயிகளுக்கு அதிகாரம்',
+    about_p1: 'அக்ரோAI என்பது சிறு விவசாயிகளுக்காக வடிவமைக்கப்பட்ட AI-இயங்கும் வேளாண்மை உதவியாளர். எங்கள் நோக்கம் மேம்பட்ட பயிர் நோய் கண்டறிதலை ஒவ்வொரு விவசாயிக்கும் அணுகக்கூடியதாக மாற்றுவதே.',
+    about_p2: 'அதிநவீன செயற்கை நுண்ணறிவு மற்றும் கணினி பார்வை தொழில்நுட்பத்தைப் பயன்படுத்தி, அக்ரோAI பயிர் படங்களை உடனடியாக பகுப்பாய்வு செய்து நோய்களை கண்டறியவும், தீர்வுகளை வழங்கவும், தடுப்பு குறிப்புகளை வழங்கவும் முடியும்.',
+    about_p3: 'உலகிற்கு உணவளிக்கும் மக்களுக்கு தொழில்நுட்பம் சேவை செய்ய வேண்டும் என்று நாங்கள் நம்புகிறோம்.',
+
+    // Features
+    features_title: 'சக்திவாய்ந்த அம்சங்கள்',
+    features_subtitle: 'ஸ்மார்ட் விவசாயத்திற்கு தேவையான அனைத்தும்',
+    feature_1_title: 'நோய் கண்டறிதல்',
+    feature_1_desc: 'பயிர் படத்தை பதிவேற்றி, AI மூலம் உடனடி நோய் கண்டறிதலைப் பெறுங்கள்.',
+    feature_2_title: 'AI தீர்வுகள்',
+    feature_2_desc: 'கண்டறியப்பட்ட நோய்களுக்கு தெளிவான, விவசாயி-நட்பு தீர்வுகளை பெறுங்கள்.',
+    feature_3_title: 'பருவகால ஆலோசனை',
+    feature_3_desc: 'உங்கள் விவசாய தேவைகளுக்கான சரியான நேர பருவகால ஆலோசனைகளைப் பெறுங்கள்.',
+    feature_4_title: 'பல மொழி',
+    feature_4_desc: 'அனைத்தையும் ஆங்கிலம் மற்றும் தமிழில் அணுகுங்கள்.',
+    feature_5_title: 'டாஷ்போர்டு & வரலாறு',
+    feature_5_desc: 'உங்கள் கடந்த பதிவேற்றங்கள் மற்றும் முடிவுகளை டாஷ்போர்டில் பாருங்கள்.',
+    feature_6_title: 'ஸ்மார்ட் அறிவிப்புகள்',
+    feature_6_desc: 'சரியான நேரத்தில் எச்சரிக்கைகள் மற்றும் குறிப்புகளைப் பெறுங்கள்.',
+
+    // How It Works
+    how_title: 'எப்படி செயல்படுகிறது',
+    how_subtitle: '4 எளிய படிகளில் முடிவுகளைப் பெறுங்கள்',
+    step_1_title: 'படத்தை பதிவேற்றுங்கள்',
+    step_1_desc: 'உங்கள் பயிரின் புகைப்படத்தை எடுத்து அக்ரோAI-யில் பதிவேற்றுங்கள்.',
+    step_2_title: 'AI பகுப்பாய்வு',
+    step_2_desc: 'எமது AI படத்தை பகுப்பாய்வு செய்து நோய்களை கண்டறிகிறது.',
+    step_3_title: 'முடிவுகளைப் பெறுங்கள்',
+    step_3_desc: 'நோய் பெயர், அறிகுறிகள், தீர்வு மற்றும் தடுப்பு குறிப்புகள் உட்பட விரிவான முடிவுகளைப் பெறுங்கள்.',
+    step_4_title: 'வரலாற்றைப் பாருங்கள்',
+    step_4_desc: 'உங்கள் டாஷ்போர்டில் இருந்து கடந்த முடிவுகளை எந்த நேரத்திலும் அணுகுங்கள்.',
+
+    // Contact
+    contact_title: 'எங்களை தொடர்பு கொள்ளுங்கள்',
+    contact_subtitle: 'நாங்கள் உங்களிடமிருந்து கேட்க விரும்புகிறோம்',
+    contact_name: 'உங்கள் பெயர்',
+    contact_email: 'மின்னஞ்சல் முகவரி',
+    contact_message: 'உங்கள் செய்தி',
+    contact_send: 'செய்தி அனுப்புங்கள்',
+    contact_success: 'செய்தி வெற்றிகரமாக அனுப்பப்பட்டது!',
+
+    // Auth
+    login_title: 'மீண்டும் வரவேற்கிறோம்',
+    login_subtitle: 'உங்கள் கணக்கில் உள்நுழையுங்கள்',
+    signup_title: 'கணக்கை உருவாக்கு',
+    signup_subtitle: 'அக்ரோAI-யில் சேர்ந்து உங்கள் பயிர்களை பாதுகாக்கத் தொடங்குங்கள்',
+    auth_email: 'மின்னஞ்சல் முகவரி',
+    auth_password: 'கடவுச்சொல்',
+    auth_confirm: 'கடவுச்சொல்லை உறுதிப்படுத்தவும்',
+    auth_name: 'முழு பெயர்',
+    auth_login: 'உள்நுழையுங்கள்',
+    auth_signup: 'கணக்கை உருவாக்கு',
+    auth_no_account: 'கணக்கு இல்லையா?',
+    auth_has_account: 'ஏற்கனவே கணக்கு உள்ளதா?',
+    auth_signup_link: 'பதிவு செய்யுங்கள்',
+    auth_login_link: 'உள்நுழையுங்கள்',
+
+    // Dashboard
+    dash_upload: 'பதிவேற்றம் & பகுப்பாய்வு',
+    dash_history: 'வரலாறு',
+    dash_notifications: 'அறிவிப்புகள்',
+    dash_advice: 'பயிர் ஆலோசனை',
+    dash_upload_title: 'படத்தை பதிவேற்றுங்கள்',
+    dash_upload_desc: 'AI பகுப்பாய்வுக்கு புகைப்படத்தை எடுங்கள் அல்லது படத்தை தேர்ந்தெடுக்கவும்',
+    dash_upload_btn: 'பதிவேற்ற கிளிக் செய்யுங்கள் அல்லது இழுத்து விடுங்கள்',
+    dash_upload_hint: 'JPG, PNG, WEBP ஆதரிக்கிறது (அதிகபட்சம் 10MB)',
+    dash_analyze: 'AI மூலம் பகுப்பாய்வு செய்',
+    dash_analyzing: 'பகுப்பாய்வு செய்கிறது...',
+    dash_history_title: 'பகுப்பாய்வு வரலாறு',
+    dash_history_desc: 'உங்கள் கடந்த பயிர் பகுப்பாய்வு முடிவுகளைப் பாருங்கள்',
+    dash_notif_title: 'அறிவிப்புகள்',
+    dash_notif_desc: 'எச்சரிக்கைகள் மற்றும் குறிப்புகளுடன் புதுப்பித்த நிலையில் இருங்கள்',
+    dash_advice_title: 'பருவகால & பயிர் ஆலோசனை',
+    dash_advice_desc: 'நிபுணர் விவசாய குறிப்புகள் மற்றும் பருவகால வழிகாட்டுதல்',
+    dash_no_history: 'இன்னும் பகுப்பாய்வு வரலாறு இல்லை',
+    dash_no_history_desc: 'தொடங்க ஒரு பயிர் படத்தை பதிவேற்றுங்கள்',
+    dash_no_notif: 'இன்னும் அறிவிப்புகள் இல்லை',
+    dash_no_notif_desc: 'நீங்கள் இங்கே எச்சரிக்கைகள் மற்றும் குறிப்புகளைப் பெறுவீர்கள்',
+
+    // Results
+    result_disease: 'நோய் கண்டறியப்பட்டது',
+    result_symptoms: 'அறிகுறிகள்',
+    result_remedy: 'தீர்வு',
+    result_prevention: 'தடுப்பு குறிப்புகள்',
+    result_healthy: 'ஆரோக்கியமான பயிர்',
+    result_healthy_msg: 'உங்களது பயிர் ஆரோக்கியமாக உள்ளது! நோய்கள் எதுவும் கண்டறியப்படவில்லை.',
+    result_not_crop: 'பயிர் கண்டறியப்படவில்லை',
+    result_not_crop_msg: 'இந்தப் படத்தில் தகுதியான தாவர இலையைக் கண்டுபிடிக்க முடியவில்லை. தயவு செய்து பயிரின் தெளிவான புகைப்படத்தை எடுக்கவும்.',
+    result_uncertain: 'உறுதியற்ற முடிவு',
+    result_uncertain_msg: 'AI-க்கு இந்த முடிவில் போதிய நம்பிக்கை இல்லை. தயவுசெய்து பாதிக்கப்பட்ட பகுதியை நெருக்கமாகப் படம் பிடிக்கவும்.',
+    result_multi_leaf: 'பல இலைகள் கண்டறியப்பட்டன. முக்கிய இலையை மட்டும் பகுப்பாய்வு செய்கிறோம்.',
+
+    // Footer
+    footer_tagline: 'நுண்ணறிவு மூலம் வேளாண்மையை மாற்றுதல்',
+    footer_nav: 'வழிசெலுத்தல்',
+    footer_resources: 'வளங்கள்',
+    footer_legal: 'சட்டப்பூர்வ',
+    footer_privacy: 'தனியுரிமைக் கொள்கை',
+    footer_terms: 'சேவை விதிமுறைகள்',
+    footer_faq: 'அடிக்கடி கேட்கப்படும் கேள்விகள்',
+    footer_support: 'ஆதரவு',
+    footer_rights: '© 2026 அக்ரோAI. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.',
+
+    // Testimonials
+    testimonial_title: 'விவசாயிகள் என்ன சொல்கிறார்கள்',
+    testimonial_subtitle: 'உண்மையான விவசாயிகளின் உண்மையான கதைகள்',
+    testimonial_1: '"என் தக்காளி செடிகளில் நோய் முழு வயலுக்கும் பரவுவதற்கு முன்பே அக்ரோAI கண்டறிய உதவியது. தீர்வு பரிந்துரை என் அறுவடையை காப்பாற்றியது!"',
+    testimonial_1_name: 'ராஜன் குமார்',
+    testimonial_1_role: 'அரிசி & காய்கறி விவசாயி',
+    testimonial_2: '"நான் முன்பு 30% பயிர்களை நோய்களால் இழந்தேன். அக்ரோAI பயன்படுத்திய பிறகு, என் இழப்புகள் வியத்தகு அளவில் குறைந்துள்ளன."',
+    testimonial_2_name: 'லக்ஷ்மி தேவி',
+    testimonial_2_role: 'சிறு விவசாயி',
+    testimonial_3: '"தமிழ் மொழி ஆதரவு முடிவுகளை புரிந்துகொள்வதை மிகவும் எளிதாக்குகிறது. அக்ரோAI எங்களைப் போன்ற விவசாயிகளை உண்மையிலேயே கவனிக்கிறது."',
+    testimonial_3_name: 'முருகன் எஸ்.',
+    testimonial_3_role: 'நெல் விவசாயி',
+
+    // Benefits
+    benefits_title: 'நன்மைகள்',
+    benefits_subtitle: 'விவசாயிகள் ஏன் அக்ரோAI-ஐ தேர்வு செய்கிறார்கள்',
+    benefit_1_title: 'உங்கள் பயிர்களை காப்பாற்றுங்கள்',
+    benefit_1_desc: 'பயிர் இழப்புகளை தடுக்க முன்கூட்டியே கண்டறிதல் மற்றும் சரியான நேரத்தில் சிகிச்சை.',
+    benefit_2_title: 'பணம் சேமியுங்கள்',
+    benefit_2_desc: 'இலக்கு தீர்வுகளுடன் தேவையற்ற பூச்சிக்கொல்லி பயன்பாட்டை குறைக்கவும்.',
+    benefit_3_title: 'பயன்படுத்த எளிதானது',
+    benefit_3_desc: 'குறைந்தபட்ச தொழில்நுட்ப அறிவு கொண்ட விவசாயிகளுக்காக வடிவமைக்கப்பட்ட எளிய இடைமுகம்.',
+    benefit_4_title: 'எப்போதும் கிடைக்கும்',
+    benefit_4_desc: 'உங்கள் தொலைபேசியிலிருந்து 24/7 AI-இயங்கும் கண்டறிதலை அணுகுங்கள்.',
+  },
+  hi: {
+    nav_home: 'होम', nav_about: 'हमारे बारे में', nav_features: 'सुविधाएं', nav_how: 'कैसे काम करता है', nav_contact: 'संपर्क करें', nav_login: 'लॉग इन', nav_signup: 'साइन अप', nav_dashboard: 'डैशबोर्ड', nav_logout: 'लॉग आउट',
+    dash_upload: 'अपलोड और विश्लेषण', dash_history: 'इतिहास', dash_notifications: 'सूचनाएं', dash_advice: 'फसल सलाह', dash_upload_title: 'फसल की छवि अपलोड करें', dash_upload_desc: 'AI विश्लेषण के लिए अपनी फसल की तस्वीर लें या छवि चुनें', dash_upload_btn: 'अपलोड करने के लिए क्लिक करें', dash_analyze: 'AI से विश्लेषण करें', dash_analyzing: 'विश्लेषण हो रहा है...',
+    result_disease: 'रोग का पता चला', result_symptoms: 'लक्षण', result_remedy: 'उपचार', result_prevention: 'रोकथाम', result_healthy: 'स्वस्थ फसल', result_healthy_msg: 'आपकी फसल स्वस्थ प्रतीत होती है! कोई बीमारी नहीं पाई गई।', result_not_crop: 'फसल नहीं मिली', result_not_crop_msg: 'तस्वीर में कोई वैध पौधा नहीं मिला।', result_uncertain: 'अनिश्चित परिणाम',
+    hero_title_1: 'स्मार्ट खेती', hero_title_2: 'यहाँ से शुरू होती है'
+  },
+  te: {
+    nav_home: 'హోమ్', nav_about: 'మా గురించి', nav_features: 'ఫీచర్లు', nav_how: 'ఎలా పనిచేస్తుంది', nav_contact: 'సంప్రదించండి', nav_login: 'లాగిన్', nav_signup: 'సైన్ అప్', nav_dashboard: 'డ్యాష్‌బోర్డ్', nav_logout: 'లాగౌట్',
+    dash_upload: 'అప్‌లోడ్ & విశ్లేషణ', dash_history: 'చరిత్ర', dash_notifications: 'నోటిఫికేషన్‌లు', dash_advice: 'పంట సలహా', dash_upload_title: 'పంట చిత్రాన్ని అప్‌లోడ్ చేయండి', dash_upload_desc: 'AI విశ్లేషణ కోసం మీ పంట చిత్రాన్ని ఎంచుకోండి', dash_upload_btn: 'అప్‌లోడ్ చేయడానికి క్లిక్ చేయండి', dash_analyze: 'AI తో విశ్లేషించండి', dash_analyzing: 'విశ్లేషిస్తోంది...',
+    result_disease: 'వ్యాధి కనుగొనబడింది', result_symptoms: 'లక్షణాలు', result_remedy: 'నివారణ', result_prevention: 'నివారణ చర్యలు', result_healthy: 'ఆరోగ్యకరమైన పంట', result_healthy_msg: 'మీ పంట ఆరోగ్యంగా ఉన్నట్లు కనిపిస్తోంది! వ్యాధులు కనుగొనబడలేదు.', result_not_crop: 'పంట కనుగొనబడలేదు', result_not_crop_msg: 'చిత్రంలో సరైన మొక్క లేదు.', result_uncertain: 'అనిశ్చిత ఫలితం'
+  },
+  kn: {
+    nav_home: 'ಮುಖಪುಟ', nav_about: 'ನಮ್ಮ ಬಗ್ಗೆ', nav_features: 'ವೈಶಿಷ್ಟ್ಯಗಳು', nav_how: 'ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ', nav_contact: 'ಸಂಪರ್ಕಿಸಿ', nav_login: 'ಲಾಗಿನ್', nav_signup: 'ಸೈನ್ ಅಪ್', nav_dashboard: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', nav_logout: 'ಲಾಗೌಟ್',
+    dash_upload: 'ಅಪ್‌ಲೋಡ್ ಮತ್ತು ವಿಶ್ಲೇಷಣೆ', dash_history: 'ಇತಿಹಾಸ', dash_notifications: 'ಸೂಚನೆಗಳು', dash_advice: 'ಬೆಳೆ ಸಲಹೆ', dash_upload_title: 'ಬೆಳೆಯ ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ', dash_upload_desc: 'AI ವಿಶ್ಲೇಷಣೆಗಾಗಿ ನಿಮ್ಮ ಬೆಳೆಯ ಚಿತ್ರವನ್ನು ಆರಿಸಿ', dash_upload_btn: 'ಅಪ್‌ಲೋಡ್ ಮಾಡಲು ಕ್ಲಿಕ್ ಮಾಡಿ', dash_analyze: 'AI ನೊಂದಿಗೆ ವಿಶ್ಲೇಷಿಸಿ', dash_analyzing: 'ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...',
+    result_disease: 'ರೋಗ ಪತ್ತೆಯಾಗಿದೆ', result_symptoms: 'ಲಕ್ಷಣಗಳು', result_remedy: 'ಪರಿಹಾರ', result_prevention: 'ತಡೆಗಟ್ಟುವಿಕೆ', result_healthy: 'ಆರೋಗ್ಯಕರ ಬೆಳೆ', result_healthy_msg: 'ನಿಮ್ಮ ಬೆಳೆ ಆರೋಗ್ಯಕರವಾಗಿದೆ! ಯಾವುದೇ ರೋಗಗಳಿಲ್ಲ.', result_not_crop: 'ಬೆಳೆ ಪತ್ತೆಯಾಗಿಲ್ಲ', result_not_crop_msg: 'ಚಿತ್ರದಲ್ಲಿ ಯಾವುದೇ ಸಸ್ಯವಿಲ್ಲ.', result_uncertain: 'ಅನಿಶ್ಚಿತಿತ ಫಲಿತಾಂಶ'
+  },
+  ml: {
+    nav_home: 'ഹോം', nav_about: 'ഞങ്ങളെ കുറിച്ച്', nav_features: 'സവിശേഷതകൾ', nav_how: 'എങ്ങനെ പ്രവർത്തിക്കുന്നു', nav_contact: 'ബന്ധപ്പെടുക', nav_login: 'ലോഗിൻ', nav_signup: 'സൈൻ അപ്പ്', nav_dashboard: 'ഡാഷ്‌ബോർഡ്', nav_logout: 'ലോഗൗട്ട്',
+    dash_upload: 'അപ്‌ലോഡ് & വിശകലനം', dash_history: 'ചരിത്രം', dash_notifications: 'അറിയിപ്പുകൾ', dash_advice: 'വിള ഉപദേശം', dash_upload_title: 'വിളയുടെ ചിത്രം അപ്‌ലോഡ് ചെയ്യുക', dash_upload_desc: 'AI വിശകലനത്തിനായി നിങ്ങളുടെ വിളയുടെ ചിത്രം തിരഞ്ഞെടുക്കുക', dash_upload_btn: 'അപ്‌ലോഡ് ചെയ്യാൻ ക്ലിക്ക് ചെയ്യുക', dash_analyze: 'AI ഉപയോഗിച്ച് വിശകലനം ചെയ്യുക', dash_analyzing: 'വിശകലനം ചെയ്യുന്നു...',
+    result_disease: 'രോഗം കണ്ടെത്തി', result_symptoms: 'ലക്ഷണങ്ങൾ', result_remedy: 'പ്രതിവിധി', result_prevention: 'പ്രതിരോധം', result_healthy: 'ആരോഗ്യമുള്ള വിള', result_healthy_msg: 'നിങ്ങളുടെ വിളകൾക്ക് ആരോഗ്യമുണ്ട്! രോഗങ്ങളൊന്നും കണ്ടെത്തിയില്ല.', result_not_crop: 'വിള കണ്ടെത്തിയില്ല', result_not_crop_msg: 'ചിത്രത്തിൽ ചെടികളൊന്നും കണ്ടെത്തിയില്ല.', result_uncertain: 'അനിശ്ചിത ഫലം'
+  }
+};
+
+export const getTranslation = (lang, key) => {
+  return translations[lang]?.[key] || translations['en']?.[key] || key;
+};
