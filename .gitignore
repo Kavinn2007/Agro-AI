@@ -1,12 +1,23 @@
+# Environment and secrets
 .env
-node_modules
-dist
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Production build outputs
+dist/
+build/
+.next/
+out/
+.vercel/
+
+# Logs and temporary files
+*.log
+*.zip
+build_error.txt
+next_help.txt
+vercel_out.txt
 .DS_Store
-
-# Next.js
-.next
-out
-build
-.vercel
-
-.vercel
+Thumbs.db

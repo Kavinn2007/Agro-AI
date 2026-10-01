@@ -2,6 +2,9 @@ export const translations = {
   en: {
     // Navbar
     nav_home: 'Home',
+    nav_detection: 'Disease Detection',
+    nav_market: 'Market',
+    nav_environment: 'Environment',
     nav_about: 'About',
     nav_features: 'Features',
     nav_how: 'How It Works',
@@ -10,14 +13,15 @@ export const translations = {
     nav_signup: 'Sign in',
     nav_dashboard: 'Dashboard',
     nav_logout: 'Logout',
+    nav_analyze_btn: 'Analyze Crop',
 
     // Hero
-    hero_badge: 'AI-Powered Agriculture',
-    hero_title_1: 'Smart Farming',
-    hero_title_2: 'Starts Here',
-    hero_subtitle: 'Upload your crop image and get instant disease detection, remedies, and prevention tips using AI',
-    hero_cta: 'Get Started',
-    hero_demo: 'Try Demo',
+    hero_badge: 'AI-POWERED AGRICULTURE',
+    hero_title_1: 'See Your Crop.',
+    hero_title_2: 'Know What It Needs.',
+    hero_subtitle: 'Upload or capture a crop photo to detect plant diseases instantly with neural computer vision. Receive actionable remedies, environmental intelligence, and market forecasts.',
+    hero_cta: 'Analyze My Crop',
+    hero_demo: 'Explore AgroAI',
 
     // Demo
     demo_title: 'Demo: AI Crop Analysis',
@@ -162,6 +166,9 @@ export const translations = {
   ta: {
     // Navbar
     nav_home: 'முகப்பு',
+    nav_detection: 'நோய் கண்டறிதல்',
+    nav_market: 'சந்தை நிலவரம்',
+    nav_environment: 'சுற்றுச்சூழல்',
     nav_about: 'எங்களைப் பற்றி',
     nav_features: 'அம்சங்கள்',
     nav_how: 'எப்படி செயல்படுகிறது',
@@ -170,14 +177,15 @@ export const translations = {
     nav_signup: 'பதிவு செய்ய',
     nav_dashboard: 'டாஷ்போர்டு',
     nav_logout: 'வெளியேறு',
+    nav_analyze_btn: 'பயிரை சோதிக்கவும்',
 
     // Hero
     hero_badge: 'AI மூலம் இயங்கும் வேளாண்மை',
-    hero_title_1: 'ஸ்மார்ட் விவசாயம்',
-    hero_title_2: 'இங்கே தொடங்குகிறது',
-    hero_subtitle: 'உங்கள் பயிர் படத்தை பதிவேற்றி, AI மூலம் உடனடி நோய் கண்டறிதல், தீர்வுகள் மற்றும் தடுப்பு குறிப்புகளைப் பெறுங்கள்',
-    hero_cta: 'தொடங்குங்கள்',
-    hero_demo: 'டெமோ பார்க்க',
+    hero_title_1: 'பயிரைப் பாருங்கள்.',
+    hero_title_2: 'அதன் தேவையை உணருங்கள்.',
+    hero_subtitle: 'உங்கள் பயிர் புகைப்படத்தை பதிவேற்றி, AI மூலம் உடனடி நோய் கண்டறிதல், உடனடி தீர்வுகள் மற்றும் நிபுணர் வழிகாட்டுதலைப் பெறுங்கள்.',
+    hero_cta: 'பயிரை பரிசோதிக்கவும்',
+    hero_demo: 'அக்ரோAI ஐ ஆராயுங்கள்',
 
     // Demo
     demo_title: 'டெமோ: AI பயிர் பகுப்பாய்வு',

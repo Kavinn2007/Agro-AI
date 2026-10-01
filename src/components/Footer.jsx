@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { Leaf, ShieldCheck, Heart } from 'lucide-react';
 
 export default function Footer() {
   const { t } = useLanguage();
@@ -8,21 +9,21 @@ export default function Footer() {
     <footer className="footer">
       <div className="container">
         <div className="footer-grid">
+          {/* Brand Column */}
           <div className="footer-brand">
-            <Link to="/" className="navbar-brand">
-              <img src="/logo.png" alt="AgroAI" style={{ height: 36, width: 36, borderRadius: '0.5rem' }} />
-              <span style={{ 
-                background: 'linear-gradient(135deg, #34d399, #22d3ee)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                fontFamily: 'var(--font-display)',
-                fontWeight: 800,
-                fontSize: 'var(--fs-xl)'
-              }}>AgroAI</span>
+            <Link to="/" className="navbar-brand" style={{ marginBottom: '0.75rem' }}>
+              <img src="/logo.png" alt="AgroAI" style={{ height: 36, width: 36, borderRadius: 'var(--radius-md)' }} />
+              <div className="navbar-brand-name">
+                <span>AgroAI</span>
+                <span className="navbar-brand-badge">AI</span>
+              </div>
             </Link>
-            <p>{t('footer_tagline')}</p>
+            <p>
+              AI-powered agricultural assistant delivering instant crop disease detection, localized treatments, and market intelligence for farmers.
+            </p>
           </div>
 
+          {/* Navigation Links */}
           <div>
             <h4 className="footer-title">{t('footer_nav')}</h4>
             <div className="footer-links">
@@ -34,27 +35,35 @@ export default function Footer() {
             </div>
           </div>
 
+          {/* Resources */}
           <div>
             <h4 className="footer-title">{t('footer_resources')}</h4>
             <div className="footer-links">
-              <a href="#faq">{t('footer_faq')}</a>
-              <a href="#support">{t('footer_support')}</a>
+              <Link to="/#diagnosis">Disease Diagnosis</Link>
+              <Link to="/#market">Market Prices</Link>
+              <Link to="/#environment">Seasonal Advice</Link>
               <Link to="/dashboard">{t('nav_dashboard')}</Link>
             </div>
           </div>
 
+          {/* Legal / Trust */}
           <div>
             <h4 className="footer-title">{t('footer_legal')}</h4>
             <div className="footer-links">
               <a href="#privacy">{t('footer_privacy')}</a>
               <a href="#terms">{t('footer_terms')}</a>
+              <a href="#support">{t('footer_support')}</a>
             </div>
           </div>
         </div>
 
+        {/* Footer Bottom Bar */}
         <div className="footer-bottom">
           <p>{t('footer_rights')}</p>
-          <p className="footer-tagline">"{t('footer_tagline')}"</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-muted)' }}>
+            <span>Built for smarter agriculture</span>
+            <Leaf size={14} color="var(--accent-lime)" />
+          </div>
         </div>
       </div>
     </footer>
