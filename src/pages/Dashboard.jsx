@@ -504,10 +504,10 @@ export default function Dashboard() {
                         </div>
                       </div>
                     ) : result.confidence < 60 ? (
-                      <div className="result-card" style={{ borderLeft: '4px solid var(--yellow-500)' }}>
+                      <div className="result-card" style={{ borderLeft: '4px solid var(--green-500)' }}>
                         <div style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
-                          <div style={{ fontSize: '3rem', marginBottom: 'var(--space-4)' }}>⚠️</div>
-                          <h3 style={{ color: 'var(--yellow-400)', marginBottom: 'var(--space-2)' }}>{t('result_uncertain')}</h3>
+                          <div style={{ fontSize: '3rem', marginBottom: 'var(--space-4)' }}>🌱</div>
+                          <h3 style={{ color: 'var(--accent-lime)', marginBottom: 'var(--space-2)' }}>{t('result_uncertain')}</h3>
                           <p>{t('result_uncertain_msg')}</p>
                         </div>
                       </div>
@@ -651,10 +651,10 @@ export default function Dashboard() {
                                     borderRadius: 'var(--radius-full)',
                                     display: 'inline-block',
                                     background: String(result.severity).toLowerCase().includes('high') ? 'rgba(239, 68, 68, 0.2)' : 
-                                                String(result.severity).toLowerCase().includes('med') ? 'rgba(245, 158, 11, 0.2)' : 
+                                                String(result.severity).toLowerCase().includes('med') ? 'rgba(74, 222, 128, 0.2)' : 
                                                 'rgba(16, 185, 129, 0.2)',
                                     color: String(result.severity).toLowerCase().includes('high') ? 'var(--red-400)' : 
-                                           String(result.severity).toLowerCase().includes('med') ? 'var(--yellow-400)' : 
+                                           String(result.severity).toLowerCase().includes('med') ? 'var(--accent-lime)' : 
                                            'var(--green-400)'
                                   }}>
                                     Severity: {result.severity}

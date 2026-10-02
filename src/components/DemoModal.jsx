@@ -78,8 +78,8 @@ export default function DemoModal({ isOpen, onClose }) {
               <div style={{ display: 'flex', gap: '12px' }}>
                 <div style={{
                   width: '36px', height: '36px', borderRadius: 'var(--radius-md)',
-                  background: 'rgba(234, 179, 8, 0.15)', display: 'flex', alignItems: 'center',
-                  justifyContent: 'center', color: 'var(--amber-400)', flexShrink: 0
+                  background: 'rgba(74, 222, 128, 0.15)', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', color: 'var(--accent-lime)', flexShrink: 0
                 }}>
                   <AlertTriangle size={18} />
                 </div>

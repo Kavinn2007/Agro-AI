@@ -17,11 +17,10 @@ export const translations = {
 
     // Hero
     hero_badge: 'AI-POWERED AGRICULTURE',
-    hero_title_1: 'See Your Crop.',
-    hero_title_2: 'Know What It Needs.',
+    hero_title: 'AGRO AI',
     hero_subtitle: 'Upload or capture a crop photo to detect plant diseases instantly with neural computer vision. Receive actionable remedies, environmental intelligence, and market forecasts.',
-    hero_cta: 'Analyze My Crop',
-    hero_demo: 'Explore AgroAI',
+    hero_cta: 'Get Started',
+    hero_demo: 'Try Demo',
 
     // Demo
     demo_title: 'Demo: AI Crop Analysis',
@@ -181,11 +180,10 @@ export const translations = {
 
     // Hero
     hero_badge: 'AI மூலம் இயங்கும் வேளாண்மை',
-    hero_title_1: 'பயிரைப் பாருங்கள்.',
-    hero_title_2: 'அதன் தேவையை உணருங்கள்.',
+    hero_title: 'AGRO AI',
     hero_subtitle: 'உங்கள் பயிர் புகைப்படத்தை பதிவேற்றி, AI மூலம் உடனடி நோய் கண்டறிதல், உடனடி தீர்வுகள் மற்றும் நிபுணர் வழிகாட்டுதலைப் பெறுங்கள்.',
-    hero_cta: 'பயிரை பரிசோதிக்கவும்',
-    hero_demo: 'அக்ரோAI ஐ ஆராயுங்கள்',
+    hero_cta: 'தொடங்குங்கள்',
+    hero_demo: 'டெமோ பார்க்கவும்',
 
     // Demo
     demo_title: 'டெமோ: AI பயிர் பகுப்பாய்வு',
@@ -330,7 +328,7 @@ export const translations = {
     nav_home: 'होम', nav_about: 'हमारे बारे में', nav_features: 'सुविधाएं', nav_how: 'कैसे काम करता है', nav_contact: 'संपर्क करें', nav_login: 'लॉग इन', nav_signup: 'साइन अप', nav_dashboard: 'डैशबोर्ड', nav_logout: 'लॉग आउट',
     dash_upload: 'अपलोड और विश्लेषण', dash_history: 'इतिहास', dash_notifications: 'सूचनाएं', dash_advice: 'फसल सलाह', dash_upload_title: 'फसल की छवि अपलोड करें', dash_upload_desc: 'AI विश्लेषण के लिए अपनी फसल की तस्वीर लें या छवि चुनें', dash_upload_btn: 'अपलोड करने के लिए क्लिक करें', dash_analyze: 'AI से विश्लेषण करें', dash_analyzing: 'विश्लेषण हो रहा है...',
     result_disease: 'रोग का पता चला', result_symptoms: 'लक्षण', result_remedy: 'उपचार', result_prevention: 'रोकथाम', result_healthy: 'स्वस्थ फसल', result_healthy_msg: 'आपकी फसल स्वस्थ प्रतीत होती है! कोई बीमारी नहीं पाई गई।', result_not_crop: 'फसल नहीं मिली', result_not_crop_msg: 'तस्वीर में कोई वैध पौधा नहीं मिला।', result_uncertain: 'अनिश्चित परिणाम',
-    hero_title_1: 'स्मार्ट खेती', hero_title_2: 'यहाँ से शुरू होती है'
+    hero_title: 'AGRO AI', hero_cta: 'शुरू करें', hero_demo: 'डेमो देखें'
   },
   te: {
     nav_home: 'హోమ్', nav_about: 'మా గురించి', nav_features: 'ఫీచర్లు', nav_how: 'ఎలా పనిచేస్తుంది', nav_contact: 'సంప్రదించండి', nav_login: 'లాగిన్', nav_signup: 'సైన్ అప్', nav_dashboard: 'డ్యాష్‌బోర్డ్', nav_logout: 'లాగౌట్',

@@ -106,8 +106,9 @@ export default function MarketPrediction({ resultType, soilType }) {
     <div className="market-prediction">
       {isOffline && (
         <div className="offline-banner" style={{
-          backgroundColor: '#fef3c7', color: '#92400e', padding: '12px', 
-          borderRadius: '8px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px'
+          backgroundColor: 'rgba(74, 222, 128, 0.12)', color: 'var(--accent-lime)', padding: '12px', 
+          borderRadius: '8px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px',
+          border: '1px solid rgba(74, 222, 128, 0.25)'
         }}>
           <AlertCircle size={20} />
           <span>You are offline – showing last available cached market data.</span>

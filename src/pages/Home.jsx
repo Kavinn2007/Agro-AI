@@ -184,10 +184,8 @@ export default function Home() {
               </div>
 
               {/* High-Impact Headline */}
-              <h1>
-                <span className="hero-gradient-text">{t('hero_title_1')}</span>
-                <br />
-                {t('hero_title_2')}
+              <h1 className="hero-main-title">
+                <span className="hero-gradient-text">{t('hero_title') || 'AGRO AI'}</span>
               </h1>
 
               {/* Supporting Subtitle */}
@@ -200,14 +198,16 @@ export default function Home() {
                 <button 
                   onClick={() => scrollToSection('diagnosis')}
                   className="btn btn-primary btn-lg"
+                  id="hero-get-started-btn"
                 >
                   <Sparkles size={18} />
                   <span>{t('hero_cta')}</span>
                 </button>
 
                 <button 
-                  onClick={() => scrollToSection('features')}
+                  onClick={() => setDemoOpen(true)}
                   className="btn btn-secondary btn-lg"
+                  id="hero-try-demo-btn"
                 >
                   <span>{t('hero_demo')}</span>
                   <ArrowRight size={18} />
@@ -558,7 +558,7 @@ export default function Home() {
                   {/* Symptoms */}
                   <div className="result-detail-box">
                     <div className="result-detail-header">
-                      <AlertTriangle size={16} color="var(--amber-400)" />
+                      <AlertTriangle size={16} color="var(--accent-lime)" />
                       <span>Observed Symptoms</span>
                     </div>
                     <p className="result-detail-body">{analysisResult.symptoms}</p>
