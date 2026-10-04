@@ -1,200 +1,242 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer 
-} from 'recharts';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Search, 
-  ChevronDown, 
-  ChevronUp 
-} from 'lucide-react';
-import { generateMockMarketData } from '../utils/marketData';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Search, RefreshCw, AlertCircle } from 'lucide-react';
+import { getMarketPrices, formatReportDate } from '../services/marketService';
+
+const INITIAL_DISPLAY_LIMIT = 40;
 
 export default function MobileMarket() {
-  const [marketData, setMarketData] = useState([]);
+  const [marketPrices, setMarketPrices] = useState([]);
+  const [lastUpdated, setLastUpdated] = useState('');
+  const [arrivalDate, setArrivalDate] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [expandedCrop, setExpandedCrop] = useState(null);
+  const [displayLimit, setDisplayLimit] = useState(INITIAL_DISPLAY_LIMIT);
 
-  useEffect(() => {
+  // Fetch real data
+  const loadPrices = useCallback(async (isManualRefresh = false) => {
+    if (isManualRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    setError(null);
+
     try {
-      let data = localStorage.getItem('agroai_market_data');
-      if (data) {
-        setMarketData(JSON.parse(data));
-      } else {
-        const fresh = generateMockMarketData();
-        setMarketData(fresh);
-        localStorage.setItem('agroai_market_data', JSON.stringify(fresh));
-      }
-    } catch (e) {
-      console.error(e);
-      setMarketData(generateMockMarketData());
+      const res = await getMarketPrices({ forceRefresh: isManualRefresh });
+      setMarketPrices(res.prices);
+      setLastUpdated(res.lastUpdated);
+      setArrivalDate(res.arrivalDate);
+    } catch (err) {
+      console.error('[MobileMarket] Error loading prices:', err);
+      // DO NOT invent or display fake prices on failure
+      setError(err.message || 'Unable to connect to market service. Please try again.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
-  const categories = ['All', 'Vegetables', 'Grains', 'Cash Crops'];
+  // Initial load on mount
+  useEffect(() => {
+    loadPrices(false);
+  }, [loadPrices]);
 
-  const getCategory = (crop) => {
-    const v = ['Tomato', 'Potato', 'Onion', 'Chilli', 'Garlic', 'Brinjal', 'Cabbage'];
-    const g = ['Wheat', 'Rice', 'Paddy', 'Maize', 'Barley', 'Millet'];
-    if (v.some(item => crop.toLowerCase().includes(item.toLowerCase()))) return 'Vegetables';
-    if (g.some(item => crop.toLowerCase().includes(item.toLowerCase()))) return 'Grains';
-    return 'Cash Crops';
-  };
-
-  const filteredCrops = marketData.filter(item => {
-    const matchesSearch = item.crop.toLowerCase().includes(searchQuery.toLowerCase());
-    const itemCat = getCategory(item.crop);
-    const matchesCat = selectedCategory === 'All' || itemCat === selectedCategory;
-    return matchesSearch && matchesCat;
-  });
-
-  const prepareChartData = (past = [], predicted = []) => {
-    const data = [];
-    const today = new Date();
-
-    const recentPast = past.slice(-4);
-    recentPast.forEach((price, i) => {
-      const d = new Date(today);
-      d.setDate(d.getDate() - (4 - i));
-      data.push({
-        label: d.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' }),
-        price: price
-      });
+  // Memoized search filter for 120 FPS performance
+  const filteredPrices = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return marketPrices;
+    return marketPrices.filter((item) => {
+      const matchCrop = item.crop && item.crop.toLowerCase().includes(q);
+      const matchMarket = item.market && item.market.toLowerCase().includes(q);
+      const matchDistrict = item.district && item.district.toLowerCase().includes(q);
+      const matchState = item.state && item.state.toLowerCase().includes(q);
+      const matchVariety = item.variety && item.variety.toLowerCase().includes(q);
+      return matchCrop || matchMarket || matchDistrict || matchState || matchVariety;
     });
+  }, [marketPrices, searchQuery]);
 
-    data.push({
-      label: 'Today',
-      price: past[past.length - 1]
-    });
+  // Sliced items for smooth GPU rendering
+  const visiblePrices = useMemo(() => {
+    return filteredPrices.slice(0, displayLimit);
+  }, [filteredPrices, displayLimit]);
 
-    predicted.slice(0, 4).forEach((price, i) => {
-      const d = new Date(today);
-      d.setDate(d.getDate() + i + 1);
-      data.push({
-        label: `+${i + 1}d`,
-        price: price
-      });
-    });
-
-    return data;
-  };
+  const hasMore = filteredPrices.length > visiblePrices.length;
 
   return (
     <div className="mobile-page-content mobile-market-screen">
-      <h2 className="mobile-screen-title">Market</h2>
+      {/* Header Bar */}
+      <div className="market-screen-header">
+        <div className="market-header-text">
+          <h2 className="mobile-screen-title">Market</h2>
+          {lastUpdated && !loading && (
+            <div className="market-timestamp-row">
+              <span className="market-live-dot" />
+              <span className="market-timestamp-text">
+                Last updated: {lastUpdated}
+              </span>
+            </div>
+          )}
+        </div>
 
-      {/* Search Bar */}
+        <button
+          type="button"
+          onClick={() => loadPrices(true)}
+          disabled={loading || refreshing}
+          className={`market-refresh-btn ${refreshing ? 'is-spinning' : ''}`}
+          aria-label="Refresh market prices"
+          title="Refresh market rates"
+        >
+          <RefreshCw size={17} />
+        </button>
+      </div>
+
+      {/* Arrival Date Info Banner if available */}
+      {arrivalDate && !loading && !error && (
+        <div className="market-arrival-strip">
+          <span>Official Mandi Arrival: {formatReportDate(arrivalDate)}</span>
+          <span className="market-source-tag">Agmarknet</span>
+        </div>
+      )}
+
+      {/* Minimal Search Bar */}
       <div className="clean-search-bar">
         <Search size={16} className="clean-search-icon" />
         <input
           type="text"
-          placeholder="Search crop..."
+          placeholder="Search crop or market..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setDisplayLimit(INITIAL_DISPLAY_LIMIT);
+          }}
           className="clean-search-input"
         />
         {searchQuery && (
-          <button className="clean-clear-btn" onClick={() => setSearchQuery('')}>✕</button>
+          <button
+            type="button"
+            className="clean-clear-btn"
+            onClick={() => {
+              setSearchQuery('');
+              setDisplayLimit(INITIAL_DISPLAY_LIMIT);
+            }}
+            aria-label="Clear search"
+          >
+            ✕
+          </button>
         )}
       </div>
 
-      {/* Category Filter */}
-      <div className="clean-category-row">
-        {categories.map((cat) => (
+      {/* DATA STATES */}
+
+      {/* 1. Loading State */}
+      {loading && marketPrices.length === 0 && (
+        <div className="market-state-container">
+          <div className="market-loading-spinner" />
+          <p className="market-state-text">Fetching real-time market prices...</p>
+        </div>
+      )}
+
+      {/* 2. Error State */}
+      {!loading && error && marketPrices.length === 0 && (
+        <div className="market-state-container market-error-state">
+          <AlertCircle size={36} className="market-error-icon" />
+          <p className="market-error-title">Market Data Unavailable</p>
+          <p className="market-state-text">
+            Unable to fetch real-time prices right now. Please check your internet connection.
+          </p>
           <button
-            key={cat}
-            className={`clean-cat-pill ${selectedCategory === cat ? 'active' : ''}`}
-            onClick={() => setSelectedCategory(cat)}
+            type="button"
+            onClick={() => loadPrices(true)}
+            className="market-retry-btn"
           >
-            {cat}
+            Retry
           </button>
-        ))}
-      </div>
+        </div>
+      )}
 
-      {/* Commodity List */}
-      <div className="clean-market-list">
-        {filteredCrops.map((cropItem, idx) => {
-          const isExpanded = expandedCrop === cropItem.crop;
-          const chartData = prepareChartData(cropItem.historicalPrices, cropItem.predictedPrices);
-          const isTrendUp = cropItem.trend === 'up';
-
-          return (
-            <div 
-              key={idx} 
-              className={`clean-market-card ${isExpanded ? 'expanded' : ''}`}
+      {/* 3. Empty Search / No Data State */}
+      {!loading && !error && filteredPrices.length === 0 && (
+        <div className="market-state-container">
+          <p className="market-error-title">No Crops Found</p>
+          <p className="market-state-text">
+            {searchQuery
+              ? `No commodities matching "${searchQuery}".`
+              : 'No market data currently available.'}
+          </p>
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="market-retry-btn"
             >
-              <div 
-                className="clean-market-card-row"
-                onClick={() => setExpandedCrop(isExpanded ? null : cropItem.crop)}
-              >
-                <div className="market-crop-left">
-                  <span className="market-crop-name">{cropItem.crop}</span>
+              Clear Search
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 4. Loaded Data State */}
+      {!loading && visiblePrices.length > 0 && (
+        <div className="clean-market-list">
+          {visiblePrices.map((item) => {
+            const hasRange = item.minPrice && item.maxPrice && item.minPrice !== item.maxPrice;
+            return (
+              <div key={item.id} className="clean-market-card">
+                <div className="market-card-top">
+                  <div className="market-card-crop-group">
+                    <h3 className="market-card-crop-name">{item.crop}</h3>
+                    {item.variety && (
+                      <span className="market-card-variety-badge">{item.variety}</span>
+                    )}
+                  </div>
+                  <div className="market-card-price-group">
+                    <span className="market-card-price">
+                      ₹{item.currentPrice.toLocaleString('en-IN')}
+                    </span>
+                    <span className="market-card-unit">{item.unit}</span>
+                  </div>
                 </div>
 
-                <div className="market-crop-right">
-                  <span className="market-price-text">₹{cropItem.currentPrice} <small>/ qtl</small></span>
-                  <span className={`market-trend-pill ${isTrendUp ? 'up' : 'down'}`}>
-                    {isTrendUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                    <span>{isTrendUp ? '+3.4%' : '-2.1%'}</span>
+                <div className="market-card-middle">
+                  <span className="market-card-location">
+                    {item.market}
+                    {item.district ? ` · ${item.district}` : ''}
+                    {item.state ? `, ${item.state}` : ''}
                   </span>
-                  {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </div>
+
+                <div className="market-card-bottom">
+                  <span className="market-card-range">
+                    {hasRange
+                      ? `Range: ₹${item.minPrice.toLocaleString('en-IN')} – ₹${item.maxPrice.toLocaleString('en-IN')}`
+                      : 'Modal Price'}
+                  </span>
+                  {item.date && (
+                    <span className="market-card-date">
+                      {formatReportDate(item.date)}
+                    </span>
+                  )}
                 </div>
               </div>
+            );
+          })}
 
-              {/* Collapsible Chart */}
-              <AnimatePresence>
-                {isExpanded && (
-                  <motion.div 
-                    className="clean-chart-container"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div style={{ width: '100%', height: 140 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData} margin={{ top: 8, right: 8, left: -25, bottom: 0 }}>
-                          <XAxis 
-                            dataKey="label" 
-                            stroke="#5a7d68" 
-                            fontSize={10} 
-                            tickLine={false} 
-                          />
-                          <YAxis 
-                            stroke="#5a7d68" 
-                            fontSize={10} 
-                            tickLine={false}
-                            domain={['auto', 'auto']}
-                          />
-                          <Tooltip 
-                            contentStyle={{
-                              backgroundColor: '#071f12',
-                              borderColor: 'rgba(74, 222, 128, 0.2)',
-                              borderRadius: '8px',
-                              fontSize: '11px',
-                              color: '#fff'
-                            }}
-                          />
-                          <Line 
-                            type="monotone" 
-                            dataKey="price" 
-                            stroke="#4ade80" 
-                            strokeWidth={2} 
-                            dot={{ r: 2.5, fill: '#4ade80' }} 
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+          {/* Load More Button for 60-120 FPS Mobile Optimization */}
+          {hasMore && (
+            <div className="market-load-more-row">
+              <button
+                type="button"
+                onClick={() => setDisplayLimit((prev) => prev + 40)}
+                className="market-load-more-btn"
+              >
+                Show More ({filteredPrices.length - visiblePrices.length} remaining)
+              </button>
             </div>
-          );
-        })}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
