@@ -46,7 +46,7 @@ export default function Login() {
             Login
           </Link>
           <Link to="/signup" style={{ flex: 1, textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', textDecoration: 'none' }}>
-            Sign in
+            Sign up
           </Link>
         </div>
 

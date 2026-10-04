@@ -5,42 +5,20 @@ import {
 import { 
   TrendingUp, 
   TrendingDown, 
-  AlertCircle, 
   Search, 
-  Sparkles, 
   ChevronDown, 
-  ChevronUp,
-  Tag,
-  ArrowUpRight
+  ChevronUp 
 } from 'lucide-react';
 import { generateMockMarketData } from '../utils/marketData';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MobileMarket() {
   const [marketData, setMarketData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [expandedCrop, setExpandedCrop] = useState('Tomato');
+  const [expandedCrop, setExpandedCrop] = useState(null);
 
   useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    loadMarketData();
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  const loadMarketData = () => {
-    setLoading(true);
     try {
       let data = localStorage.getItem('agroai_market_data');
       if (data) {
@@ -53,14 +31,11 @@ export default function MobileMarket() {
     } catch (e) {
       console.error(e);
       setMarketData(generateMockMarketData());
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
 
   const categories = ['All', 'Vegetables', 'Grains', 'Cash Crops'];
 
-  // Categorize helper
   const getCategory = (crop) => {
     const v = ['Tomato', 'Potato', 'Onion', 'Chilli', 'Garlic', 'Brinjal', 'Cabbage'];
     const g = ['Wheat', 'Rice', 'Paddy', 'Maize', 'Barley', 'Millet'];
@@ -80,30 +55,27 @@ export default function MobileMarket() {
     const data = [];
     const today = new Date();
 
-    const recentPast = past.slice(-5);
+    const recentPast = past.slice(-4);
     recentPast.forEach((price, i) => {
       const d = new Date(today);
-      d.setDate(d.getDate() - (5 - i));
+      d.setDate(d.getDate() - (4 - i));
       data.push({
         label: d.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' }),
-        Actual: price,
-        Predicted: null
+        price: price
       });
     });
 
     data.push({
       label: 'Today',
-      Actual: past[past.length - 1],
-      Predicted: past[past.length - 1]
+      price: past[past.length - 1]
     });
 
-    predicted.slice(0, 5).forEach((price, i) => {
+    predicted.slice(0, 4).forEach((price, i) => {
       const d = new Date(today);
       d.setDate(d.getDate() + i + 1);
       data.push({
         label: `+${i + 1}d`,
-        Actual: null,
-        Predicted: price
+        price: price
       });
     });
 
@@ -112,40 +84,29 @@ export default function MobileMarket() {
 
   return (
     <div className="mobile-page-content mobile-market-screen">
-      {/* 1. HEADER */}
-      <div className="mobile-subpage-header">
-        <h2 className="mobile-subpage-title">Market Price Forecast</h2>
-        <p className="mobile-subpage-desc">AI-driven commodity rates & best selling windows</p>
-      </div>
+      <h2 className="mobile-screen-title">Market</h2>
 
-      {/* Offline Alert */}
-      {isOffline && (
-        <div className="mobile-offline-banner">
-          <AlertCircle size={16} />
-          <span>Offline mode: Showing cached Mandi pricing data</span>
-        </div>
-      )}
-
-      {/* 2. SEARCH & FILTER CHIPS */}
-      <div className="market-search-bar">
-        <Search size={16} className="search-icon" />
+      {/* Search Bar */}
+      <div className="clean-search-bar">
+        <Search size={16} className="clean-search-icon" />
         <input
           type="text"
-          placeholder="Search crop (e.g. Tomato, Wheat)..."
+          placeholder="Search crop..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="market-search-input"
+          className="clean-search-input"
         />
         {searchQuery && (
-          <button className="search-clear-btn" onClick={() => setSearchQuery('')}>✕</button>
+          <button className="clean-clear-btn" onClick={() => setSearchQuery('')}>✕</button>
         )}
       </div>
 
-      <div className="market-category-chips">
+      {/* Category Filter */}
+      <div className="clean-category-row">
         {categories.map((cat) => (
           <button
             key={cat}
-            className={`cat-chip ${selectedCategory === cat ? 'active' : ''}`}
+            className={`clean-cat-pill ${selectedCategory === cat ? 'active' : ''}`}
             onClick={() => setSelectedCategory(cat)}
           >
             {cat}
@@ -153,138 +114,87 @@ export default function MobileMarket() {
         ))}
       </div>
 
-      {/* 3. COMMODITY CARDS */}
-      <div className="market-cards-list">
-        {filteredCrops.length === 0 ? (
-          <div className="empty-market-state">
-            <Tag size={32} color="var(--text-muted)" />
-            <p>No commodities found matching "{searchQuery}"</p>
-          </div>
-        ) : (
-          filteredCrops.map((cropItem, idx) => {
-            const isExpanded = expandedCrop === cropItem.crop;
-            const chartData = prepareChartData(cropItem.historicalPrices, cropItem.predictedPrices);
-            const isTrendUp = cropItem.trend === 'up';
+      {/* Commodity List */}
+      <div className="clean-market-list">
+        {filteredCrops.map((cropItem, idx) => {
+          const isExpanded = expandedCrop === cropItem.crop;
+          const chartData = prepareChartData(cropItem.historicalPrices, cropItem.predictedPrices);
+          const isTrendUp = cropItem.trend === 'up';
 
-            return (
-              <motion.div 
-                key={idx} 
-                className={`mobile-market-card ${isExpanded ? 'expanded' : ''}`}
-                layout
+          return (
+            <div 
+              key={idx} 
+              className={`clean-market-card ${isExpanded ? 'expanded' : ''}`}
+            >
+              <div 
+                className="clean-market-card-row"
+                onClick={() => setExpandedCrop(isExpanded ? null : cropItem.crop)}
               >
-                {/* Main Card Header (Click to expand chart) */}
-                <div 
-                  className="market-card-main-row"
-                  onClick={() => setExpandedCrop(isExpanded ? null : cropItem.crop)}
-                >
-                  <div className="card-crop-info">
-                    <span className="card-crop-category">{getCategory(cropItem.crop)}</span>
-                    <h4 className="card-crop-name">{cropItem.crop}</h4>
-                  </div>
-
-                  <div className="card-price-info">
-                    <div className="price-tag">
-                      <span className="rupee-symbol">₹</span>
-                      <span className="price-num">{cropItem.currentPrice}</span>
-                      <span className="unit-label">/ qtl</span>
-                    </div>
-
-                    <div className={`price-trend-tag ${isTrendUp ? 'trend-up' : 'trend-down'}`}>
-                      {isTrendUp ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
-                      <span>{isTrendUp ? 'Bullish (+3.8%)' : 'Bearish (-2.1%)'}</span>
-                    </div>
-                  </div>
-
-                  <div className="card-expand-indicator">
-                    {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                  </div>
+                <div className="market-crop-left">
+                  <span className="market-crop-name">{cropItem.crop}</span>
                 </div>
 
-                {/* EXPANDED SECTION: CHART & ADVICE */}
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div 
-                      className="market-card-details"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.25 }}
-                    >
-                      {/* Price Trend Chart */}
-                      <div className="chart-container-box">
-                        <div className="chart-header-row">
-                          <span className="chart-title">7-Day Actual vs Forecast</span>
-                          <div className="chart-legend-dots">
-                            <span className="legend-dot actual"></span> Past
-                            <span className="legend-dot predicted"></span> AI Forecast
-                          </div>
-                        </div>
+                <div className="market-crop-right">
+                  <span className="market-price-text">₹{cropItem.currentPrice} <small>/ qtl</small></span>
+                  <span className={`market-trend-pill ${isTrendUp ? 'up' : 'down'}`}>
+                    {isTrendUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                    <span>{isTrendUp ? '+3.4%' : '-2.1%'}</span>
+                  </span>
+                  {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </div>
+              </div>
 
-                        <div style={{ width: '100%', height: 160 }}>
-                          <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                              <XAxis 
-                                dataKey="label" 
-                                stroke="#476652" 
-                                fontSize={11} 
-                                tickLine={false} 
-                              />
-                              <YAxis 
-                                stroke="#476652" 
-                                fontSize={11} 
-                                tickLine={false}
-                                domain={['auto', 'auto']}
-                              />
-                              <Tooltip 
-                                contentStyle={{
-                                  backgroundColor: '#092415',
-                                  borderColor: 'rgba(74, 222, 128, 0.25)',
-                                  borderRadius: '8px',
-                                  fontSize: '12px',
-                                  color: '#fff'
-                                }}
-                              />
-                              <Line 
-                                type="monotone" 
-                                dataKey="Actual" 
-                                stroke="#86efac" 
-                                strokeWidth={2.5} 
-                                dot={{ r: 3, fill: '#86efac' }} 
-                              />
-                              <Line 
-                                type="monotone" 
-                                dataKey="Predicted" 
-                                stroke="#22c55e" 
-                                strokeWidth={2.5} 
-                                strokeDasharray="4 4"
-                                dot={{ r: 3, fill: '#22c55e' }} 
-                              />
-                            </LineChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
-
-                      {/* Best Selling Window Recommendation */}
-                      <div className="market-advice-chip">
-                        <Sparkles size={16} color="var(--accent-lime)" />
-                        <div>
-                          <strong>AI Trade Recommendation: </strong>
-                          {isTrendUp 
-                            ? 'Prices expected to increase over the next 4-6 days. Consider holding produce for peak Mandi rates.'
-                            : 'Prices stabilizing. Favorable time for prompt market disposal to avoid warehousing loss.'}
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            );
-          })
-        )}
+              {/* Collapsible Chart */}
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div 
+                    className="clean-chart-container"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div style={{ width: '100%', height: 140 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData} margin={{ top: 8, right: 8, left: -25, bottom: 0 }}>
+                          <XAxis 
+                            dataKey="label" 
+                            stroke="#5a7d68" 
+                            fontSize={10} 
+                            tickLine={false} 
+                          />
+                          <YAxis 
+                            stroke="#5a7d68" 
+                            fontSize={10} 
+                            tickLine={false}
+                            domain={['auto', 'auto']}
+                          />
+                          <Tooltip 
+                            contentStyle={{
+                              backgroundColor: '#071f12',
+                              borderColor: 'rgba(74, 222, 128, 0.2)',
+                              borderRadius: '8px',
+                              fontSize: '11px',
+                              color: '#fff'
+                            }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="price" 
+                            stroke="#4ade80" 
+                            strokeWidth={2} 
+                            dot={{ r: 2.5, fill: '#4ade80' }} 
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
       </div>
-
-      {/* BOTTOM SAFE AREA */}
-      <div style={{ height: 'var(--space-8)' }} />
     </div>
   );
 }

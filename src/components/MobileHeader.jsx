@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { Globe, Wifi, WifiOff, Sparkles, User } from 'lucide-react';
+import { Globe, User } from 'lucide-react';
 
-export default function MobileHeader({ onOpenLanguageModal }) {
-  const { language, setLanguage, t } = useLanguage();
+export default function MobileHeader() {
+  const { language, setLanguage } = useLanguage();
   const { user, userProfile } = useAuth();
-  const navigate = useNavigate();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
 
@@ -33,11 +32,11 @@ export default function MobileHeader({ onOpenLanguageModal }) {
 
   const languagesList = [
     { code: 'en', label: 'English' },
-    { code: 'ta', label: 'தமிழ் (Tamil)' },
-    { code: 'hi', label: 'हिंदी (Hindi)' },
-    { code: 'te', label: 'తెలుగు (Telugu)' },
-    { code: 'kn', label: 'ಕನ್ನಡ (Kannada)' },
-    { code: 'ml', label: 'മലയാളം (Malayalam)' }
+    { code: 'ta', label: 'தமிழ்' },
+    { code: 'hi', label: 'हिंदी' },
+    { code: 'te', label: 'తెలుగు' },
+    { code: 'kn', label: 'ಕನ್ನಡ' },
+    { code: 'ml', label: 'മലയാളം' }
   ];
 
   return (
@@ -48,33 +47,23 @@ export default function MobileHeader({ onOpenLanguageModal }) {
           <div className="mobile-logo-wrap">
             <img src="/logo.png" alt="AgroAI" />
           </div>
-          <div className="mobile-brand-text">
-            <span className="mobile-brand-title">AGRO AI</span>
-            <span className="mobile-brand-tag">App</span>
-          </div>
+          <span className="mobile-brand-title">AGRO AI</span>
         </Link>
 
-        {/* Right actions */}
+        {/* Header Actions */}
         <div className="mobile-header-actions">
-          {/* Online/Offline indicator */}
-          <div 
-            className={`network-chip ${isOnline ? 'online' : 'offline'}`}
-            title={isOnline ? 'Online Engine Connected' : 'Offline Engine Active'}
-          >
-            {isOnline ? (
-              <span className="live-dot" />
-            ) : (
-              <WifiOff size={13} />
-            )}
-            <span className="chip-text">{isOnline ? 'Live' : 'Offline'}</span>
-          </div>
+          {/* Subtle Online/Offline dot */}
+          <span 
+            className={`connection-dot ${isOnline ? 'online' : 'offline'}`}
+            title={isOnline ? 'Online' : 'Offline'}
+          />
 
           {/* Language Switcher */}
           <div className="lang-dropdown-wrapper">
             <button
               className="mobile-lang-btn"
               onClick={() => setLangMenuOpen(!langMenuOpen)}
-              aria-label="Switch Language"
+              aria-label="Language"
             >
               <Globe size={14} />
               <span>{languageLabels[language] || 'EN'}</span>
@@ -84,7 +73,6 @@ export default function MobileHeader({ onOpenLanguageModal }) {
               <>
                 <div className="lang-menu-overlay" onClick={() => setLangMenuOpen(false)} />
                 <div className="lang-dropdown-menu">
-                  <div className="lang-dropdown-header">Select Language</div>
                   {languagesList.map((l) => (
                     <button
                       key={l.code}
@@ -94,7 +82,7 @@ export default function MobileHeader({ onOpenLanguageModal }) {
                         setLangMenuOpen(false);
                       }}
                     >
-                      {l.label}
+                      <span>{l.label}</span>
                       {language === l.code && <span className="lang-check">✓</span>}
                     </button>
                   ))}
@@ -103,7 +91,7 @@ export default function MobileHeader({ onOpenLanguageModal }) {
             )}
           </div>
 
-          {/* User Profile Avatar shortcut */}
+          {/* User Profile Shortcut */}
           <Link to="/profile" className="mobile-profile-avatar" aria-label="Profile">
             <div className="avatar-circle">
               {(userProfile?.name || user?.email || 'F').charAt(0).toUpperCase()}

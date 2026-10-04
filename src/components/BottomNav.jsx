@@ -1,7 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Scan, TrendingUp, CloudSun, User } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Home, Scan, TrendingUp, CloudSun } from 'lucide-react';
 
 export default function BottomNav() {
   const location = useLocation();
@@ -11,11 +10,9 @@ export default function BottomNav() {
     { id: 'home', label: 'Home', path: '/', icon: Home },
     { id: 'disease', label: 'Disease', path: '/disease', icon: Scan },
     { id: 'market', label: 'Market', path: '/market', icon: TrendingUp },
-    { id: 'environment', label: 'Advisory', path: '/environment', icon: CloudSun },
-    { id: 'profile', label: 'Profile', path: '/profile', icon: User },
+    { id: 'environment', label: 'Environment', path: '/environment', icon: CloudSun },
   ];
 
-  // Helper to determine active item
   const getIsActive = (path) => {
     if (path === '/') {
       return location.pathname === '/' || location.pathname === '';
@@ -45,14 +42,7 @@ export default function BottomNav() {
               aria-current={isActive ? 'page' : undefined}
             >
               <div className="bottom-nav-icon-wrapper">
-                {isActive && (
-                  <motion.div
-                    layoutId="bottomNavIndicator"
-                    className="bottom-nav-active-pill"
-                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                  />
-                )}
-                <Icon size={22} className="bottom-nav-icon" />
+                <Icon size={20} className="bottom-nav-icon" />
               </div>
               <span className="bottom-nav-label">{item.label}</span>
             </button>

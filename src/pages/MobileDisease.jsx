@@ -1,69 +1,37 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import React, { useState, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { analyzeImage } from '../services/aiService';
-import { uploadImage, saveUploadRecord, saveResult } from '../services/uploadService';
+import { saveUploadRecord, saveResult } from '../services/uploadService';
 import { processImage } from '../utils/imagePipeline';
-import { generateMockMarketData, getSmartRecommendation } from '../utils/marketData';
 import Camera from '../components/Camera';
 import { 
   Camera as CameraIcon, 
   UploadCloud, 
-  Video, 
   RotateCcw, 
-  Sparkles, 
   Volume2, 
   VolumeX, 
-  CheckCircle2, 
-  AlertTriangle, 
-  ShieldCheck, 
-  Leaf, 
-  Info,
-  ArrowRight,
-  TrendingUp,
-  RefreshCw,
-  HelpCircle
+  AlertCircle 
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MobileDisease() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const fileInputRef = useRef(null);
 
-  // Scan Mode: 'plant' or 'soil'
-  const [scanMode, setScanMode] = useState('plant');
+  // Input Mode: 'upload' or 'camera'
+  const [inputMode, setInputMode] = useState(
+    searchParams.get('mode') === 'camera' ? 'camera' : 'upload'
+  );
 
-  // Input Mode: 'upload', 'camera', 'live'
-  const [inputMode, setInputMode] = useState(searchParams.get('mode') === 'camera' ? 'camera' : 'upload');
-
-  // Image & Flow state
+  // States
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
-  const [analyzeStep, setAnalyzeStep] = useState('');
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
-
-  // Voice synthesis
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
-
-  // Market data for smart recommendations
-  const [marketData, setMarketData] = useState([]);
-
-  useEffect(() => {
-    try {
-      const data = generateMockMarketData();
-      setMarketData(data);
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
-
-  const smartRec = getSmartRecommendation(marketData, scanMode, result);
 
   // File Picker
   const handleFileChange = async (e) => {
@@ -72,7 +40,6 @@ export default function MobileDisease() {
     try {
       setErrorMsg('');
       const dataUrl = await processImage(file);
-      setSelectedFile(file);
       setPreviewUrl(dataUrl);
       setResult(null);
     } catch (err) {
@@ -83,33 +50,14 @@ export default function MobileDisease() {
   // Camera Capture
   const handleCameraCapture = (imageDataUrl) => {
     setPreviewUrl(imageDataUrl);
-    setSelectedFile(null);
     setResult(null);
     setErrorMsg('');
-    setInputMode('upload'); // return to preview stage
+    setInputMode('upload');
   };
 
-  // Live Analysis Callback
-  const handleLiveFrame = async (frameUrl) => {
-    // Process single frame
-    try {
-      const { validateInput } = await import('../services/localAnalysis');
-      const val = await validateInput(frameUrl, scanMode);
-      if (val.isValidCrop) {
-        const res = await analyzeImage(frameUrl, language, scanMode);
-        if (res) {
-          setResult(res);
-        }
-      }
-    } catch (e) {
-      console.warn('Live frame analysis skipped', e);
-    }
-  };
-
-  // Reset / Clear
+  // Reset
   const handleReset = () => {
     setPreviewUrl(null);
-    setSelectedFile(null);
     setResult(null);
     setErrorMsg('');
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -119,37 +67,26 @@ export default function MobileDisease() {
     setIsPlayingVoice(false);
   };
 
-  // Analyze Action
+  // Analyze
   const handleAnalyze = async () => {
-    if (!previewUrl) {
-      setErrorMsg('Please select or capture a crop photo first.');
-      return;
-    }
+    if (!previewUrl) return;
 
     setAnalyzing(true);
     setErrorMsg('');
     setResult(null);
-    setAnalyzeStep('Validating leaf characteristics...');
 
     try {
-      // 1. Validation
       const { validateInput } = await import('../services/localAnalysis');
-      const validationStatus = await validateInput(previewUrl, scanMode);
-      
+      const validationStatus = await validateInput(previewUrl, 'plant');
+
       if (!validationStatus.isValidCrop) {
         setResult(validationStatus);
         setAnalyzing(false);
         return;
       }
 
-      setAnalyzeStep(scanMode === 'plant' 
-        ? 'Scanning foliar health & pathogens...' 
-        : 'Evaluating soil composition & nutrients...');
+      const aiResult = await analyzeImage(previewUrl, language, 'plant');
 
-      // 2. Perform AI Vision inference
-      const aiResult = await analyzeImage(previewUrl, language, scanMode);
-
-      // 3. Save to history if logged in
       if (user && aiResult) {
         try {
           const uploadRecord = await saveUploadRecord(user.id, previewUrl);
@@ -167,11 +104,10 @@ export default function MobileDisease() {
       setErrorMsg(err.message || 'Analysis failed. Please try a clearer leaf photo.');
     } finally {
       setAnalyzing(false);
-      setAnalyzeStep('');
     }
   };
 
-  // Text-to-speech voice readout
+  // Voice Readout
   const handleToggleVoice = () => {
     if (!window.speechSynthesis || !result) return;
 
@@ -192,9 +128,9 @@ export default function MobileDisease() {
 
     let textToRead = '';
     if (result.disease === 'Healthy') {
-      textToRead = `${result.crop || 'Plant'} is healthy. No critical diseases detected. Continue good farming practices.`;
+      textToRead = `${result.crop || 'Plant'} is healthy. No critical diseases detected.`;
     } else {
-      textToRead = `Detected: ${result.crop || 'Crop'} with ${result.disease}. Remedy: ${result.remedy || result.prevention || 'Consult agricultural officer.'}`;
+      textToRead = `Detected: ${result.crop || 'Crop'} with ${result.disease}. Remedy: ${result.remedy || result.prevention || 'Consult agricultural specialist.'}`;
     }
 
     const utterance = new SpeechSynthesisUtterance(textToRead);
@@ -208,75 +144,45 @@ export default function MobileDisease() {
 
   return (
     <div className="mobile-page-content mobile-disease-screen">
-      {/* 1. TOP TITLE & MODE TOGGLE */}
-      <div className="mobile-subpage-header">
-        <h2 className="mobile-subpage-title">AI Diagnosis Engine</h2>
-        <p className="mobile-subpage-desc">Instant foliar disease identification & treatment guide</p>
-      </div>
+      <h2 className="mobile-screen-title">Disease Detection</h2>
 
-      {/* Mode Switcher Pill (Plant / Soil) */}
-      <div className="disease-mode-toggle">
-        <button
-          className={`mode-pill ${scanMode === 'plant' ? 'active' : ''}`}
-          onClick={() => { setScanMode('plant'); setResult(null); }}
-        >
-          <Leaf size={16} />
-          <span>Plant Health</span>
-        </button>
-        <button
-          className={`mode-pill ${scanMode === 'soil' ? 'active' : ''}`}
-          onClick={() => { setScanMode('soil'); setResult(null); }}
-        >
-          <span>🌍 Soil Analysis</span>
-        </button>
-      </div>
-
-      {/* ====================================================
-          STAGE 1: CAPTURE / SELECT (IF NO RESULT & NO PREVIEW OR CAMERA)
-          ==================================================== */}
-      {!result && (
+      {/* STAGE 1: CHOOSE / CAPTURE IMAGE */}
+      {!result && !analyzing && (
         <>
-          {/* Input Method Buttons */}
-          <div className="input-method-row">
-            <button
-              className={`input-tab-btn ${inputMode === 'camera' ? 'active' : ''}`}
-              onClick={() => setInputMode('camera')}
-            >
-              <CameraIcon size={18} />
-              <span>Camera</span>
-            </button>
-            <button
-              className={`input-tab-btn ${inputMode === 'upload' ? 'active' : ''}`}
-              onClick={() => setInputMode('upload')}
-            >
-              <UploadCloud size={18} />
-              <span>Upload Photo</span>
-            </button>
-            <button
-              className={`input-tab-btn ${inputMode === 'live' ? 'active' : ''}`}
-              onClick={() => setInputMode('live')}
-            >
-              <Video size={18} />
-              <span>Live Scanner</span>
-            </button>
-          </div>
+          {/* Input Method Switcher */}
+          {!previewUrl && (
+            <div className="input-method-row">
+              <button
+                className={`input-tab-btn ${inputMode === 'upload' ? 'active' : ''}`}
+                onClick={() => setInputMode('upload')}
+              >
+                <UploadCloud size={18} />
+                <span>Upload</span>
+              </button>
+              <button
+                className={`input-tab-btn ${inputMode === 'camera' ? 'active' : ''}`}
+                onClick={() => setInputMode('camera')}
+              >
+                <CameraIcon size={18} />
+                <span>Camera</span>
+              </button>
+            </div>
+          )}
 
-          {/* ACTIVE CAMERA VIEW */}
-          {(inputMode === 'camera' || inputMode === 'live') && (
+          {/* Camera View */}
+          {inputMode === 'camera' && !previewUrl && (
             <div className="camera-view-wrapper">
               <Camera 
-                isLive={inputMode === 'live'}
                 onCapture={handleCameraCapture}
-                onFrame={handleLiveFrame}
                 onCancel={() => setInputMode('upload')}
               />
             </div>
           )}
 
-          {/* ACTIVE UPLOAD VIEW */}
+          {/* Upload Dropzone */}
           {inputMode === 'upload' && !previewUrl && (
             <div 
-              className="mobile-upload-box"
+              className="clean-upload-card"
               onClick={() => fileInputRef.current?.click()}
             >
               <input
@@ -285,227 +191,111 @@ export default function MobileDisease() {
                 accept="image/*"
                 onChange={handleFileChange}
                 style={{ display: 'none' }}
-                id="mobile-crop-file-input"
               />
-
-              <div className="upload-box-icon-wrap">
-                <UploadCloud size={36} color="var(--accent-lime)" />
+              <div className="clean-upload-icon">
+                <UploadCloud size={32} />
               </div>
-
-              <h4 className="upload-box-heading">Tap to Select Crop Photo</h4>
-              <p className="upload-box-sub">Take photo with camera or browse photo gallery</p>
-
-              <div className="upload-sample-strip" onClick={(e) => e.stopPropagation()}>
-                <span className="sample-label">Or test with demo sample:</span>
-                <button 
-                  className="sample-leaf-chip"
-                  onClick={() => {
-                    setPreviewUrl('/sample_early_blight.jpg');
-                    setResult(null);
-                    setErrorMsg('');
-                  }}
-                >
-                  🍃 Tomato Early Blight
-                </button>
-              </div>
+              <span className="clean-upload-text">Select Image</span>
             </div>
           )}
 
-          {/* IMAGE PREVIEW & READY TO ANALYZE */}
-          {inputMode === 'upload' && previewUrl && !analyzing && (
-            <div className="preview-card-wrapper">
-              <div className="preview-image-container">
-                <img src={previewUrl} alt="Crop Leaf Preview" className="preview-crop-image" />
-                <button 
-                  className="preview-retake-btn" 
-                  onClick={handleReset}
-                  title="Retake or Choose Another Photo"
-                >
+          {/* Preview & Analyze Button */}
+          {previewUrl && (
+            <div className="clean-preview-wrapper">
+              <div className="clean-preview-box">
+                <img src={previewUrl} alt="Crop Leaf" className="clean-preview-img" />
+                <button className="clean-retake-btn" onClick={handleReset}>
                   <RotateCcw size={16} />
-                  <span>Change Photo</span>
+                  <span>Change</span>
                 </button>
               </div>
 
-              {/* Large Touch-friendly Analyze Button */}
-              <button 
-                className="btn-analyze-large"
-                onClick={handleAnalyze}
-                disabled={analyzing}
-              >
-                <Sparkles size={20} />
-                <span>Analyze Crop Condition</span>
+              <button className="clean-analyze-btn" onClick={handleAnalyze}>
+                Analyze
               </button>
             </div>
           )}
 
-          {/* LOADING STATE ANIMATION */}
-          {analyzing && (
-            <div className="analysis-loading-card">
-              <div className="radar-circle-wrap">
-                <div className="radar-ping-ring" />
-                <div className="radar-core">
-                  <Leaf size={28} color="#22c55e" />
-                </div>
-              </div>
-              <h4 className="loading-title">Neural Vision Analyzing...</h4>
-              <p className="loading-step">{analyzeStep || 'Detecting crop and foliage condition...'}</p>
-            </div>
-          )}
-
-          {/* ERROR ALERT */}
           {errorMsg && (
-            <div className="mobile-error-alert">
-              <AlertTriangle size={18} />
+            <div className="clean-error-alert">
+              <AlertCircle size={16} />
               <span>{errorMsg}</span>
             </div>
           )}
         </>
       )}
 
-      {/* ====================================================
-          STAGE 2: PREDICTION RESULT CARD (STRICT REQUIREMENT)
-          ==================================================== */}
-      {result && (
-        <div className="mobile-result-screen">
-          {/* Invalid crop fallback */}
+      {/* STAGE 2: ANALYZING STATE */}
+      {analyzing && (
+        <div className="clean-loading-box">
+          <div className="clean-spinner" />
+          <span className="clean-loading-text">Analyzing</span>
+        </div>
+      )}
+
+      {/* STAGE 3: RESULT */}
+      {result && !analyzing && (
+        <div className="clean-result-container">
           {!result.isValidCrop ? (
-            <div className="result-alert-box error">
-              <HelpCircle size={36} color="var(--red-400)" />
-              <h3 className="result-heading">No Crop Leaf Recognized</h3>
-              <p className="result-desc">
-                {result.message || 'Please capture a clear, close-up photo of the leaf or soil.'}
+            <div className="clean-result-card error">
+              <h3 className="clean-result-title">No Crop Recognized</h3>
+              <p className="clean-result-text">
+                {result.message || 'Please upload a clear leaf image.'}
               </p>
-              <button className="btn-primary-mobile" onClick={handleReset}>
+              <button className="clean-action-btn" onClick={handleReset}>
                 <RotateCcw size={16} />
-                <span>Scan Another Image</span>
+                <span>Try Another</span>
               </button>
             </div>
           ) : (
-            <div className="mobile-result-card">
-              {/* Image banner & header */}
+            <div className="clean-result-card">
               {previewUrl && (
-                <div className="result-photo-strip">
-                  <img src={previewUrl} alt="Analyzed Crop" />
-                  <div className="result-photo-overlay" />
-                  <div className="result-badge-row">
-                    <span className="result-crop-tag">
-                      {result.crop || 'Crop'}
-                    </span>
-                    <span className={`result-status-tag ${result.disease === 'Healthy' ? 'healthy' : 'diseased'}`}>
-                      {result.disease === 'Healthy' ? 'Healthy Foliage' : 'Disease Detected'}
-                    </span>
-                  </div>
+                <div className="clean-result-img-box">
+                  <img src={previewUrl} alt="Crop" className="clean-result-img" />
                 </div>
               )}
 
-              {/* Diagnosis Top Line */}
-              <div className="result-main-info">
-                <div className="result-diagnosis-row">
-                  <div>
-                    <span className="result-sub-label">Diagnosis Result</span>
-                    <h3 className="result-disease-title">
-                      {result.disease === 'Healthy' ? 'Healthy Crop' : result.disease}
-                    </h3>
-                  </div>
-
-                  {/* Audio Readout */}
-                  <button 
-                    className={`btn-voice-round ${isPlayingVoice ? 'speaking' : ''}`}
-                    onClick={handleToggleVoice}
-                    aria-label="Read Out Diagnosis"
-                  >
-                    {isPlayingVoice ? <VolumeX size={20} /> : <Volume2 size={20} />}
-                  </button>
+              <div className="clean-result-header">
+                <div>
+                  <h3 className="clean-result-name">
+                    {result.disease === 'Healthy' ? 'Healthy Crop' : result.disease}
+                  </h3>
+                  <span className="clean-result-confidence">
+                    {result.crop && `${result.crop} • `}{result.confidence || 95}% Confidence
+                  </span>
                 </div>
 
-                {/* Confidence Bar */}
-                <div className="result-confidence-box">
-                  <div className="conf-header">
-                    <span>Confidence Score</span>
-                    <span className="conf-value">{result.confidence || 95}%</span>
-                  </div>
-                  <div className="conf-progress-track">
-                    <div 
-                      className="conf-progress-fill"
-                      style={{ width: `${Math.min(100, Math.max(30, result.confidence || 95))}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Symptoms / Observation */}
-              {result.symptoms && (
-                <div className="result-detail-section">
-                  <div className="detail-section-header">
-                    <Info size={16} className="detail-icon symptoms" />
-                    <h4>Symptoms & Observations</h4>
-                  </div>
-                  <p className="detail-section-body">{result.symptoms}</p>
-                </div>
-              )}
-
-              {/* Actionable Remedy / Organic Solution */}
-              {result.remedy && (
-                <div className="result-detail-section remedy-section">
-                  <div className="detail-section-header">
-                    <ShieldCheck size={16} className="detail-icon remedy" />
-                    <h4>Recommended Action & Remedy</h4>
-                  </div>
-                  <p className="detail-section-body">{result.remedy}</p>
-                </div>
-              )}
-
-              {/* Preventive Measures */}
-              {result.prevention && (
-                <div className="result-detail-section">
-                  <div className="detail-section-header">
-                    <CheckCircle2 size={16} className="detail-icon prevention" />
-                    <h4>Prevention & Future Care</h4>
-                  </div>
-                  <p className="detail-section-body">{result.prevention}</p>
-                </div>
-              )}
-
-              {/* Soil details if soil mode */}
-              {result.soilType && (
-                <div className="result-detail-section">
-                  <div className="detail-section-header">
-                    <Leaf size={16} className="detail-icon soil" />
-                    <h4>Soil Characteristics & Fertilizers</h4>
-                  </div>
-                  <p className="detail-section-body">
-                    <strong>Type:</strong> {result.soilType}<br />
-                    {result.characteristics && <><strong>Features:</strong> {result.characteristics}<br /></>}
-                    {result.fertilizerSuggestions && <><strong>Fertilizer:</strong> {result.fertilizerSuggestions}</>}
-                  </p>
-                </div>
-              )}
-
-              {/* Smart Market Recommendation linked to crop/disease */}
-              {smartRec && (
-                <div className="result-smart-rec">
-                  <div className="smart-rec-icon">{smartRec.icon}</div>
-                  <div>
-                    <h5 className="smart-rec-title">{smartRec.title}</h5>
-                    <p className="smart-rec-text">{smartRec.text}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* ACTION: ANALYZE ANOTHER IMAGE */}
-              <div className="result-action-footer">
-                <button className="btn-primary-mobile" onClick={handleReset}>
-                  <RotateCcw size={18} />
-                  <span>Analyze Another Crop</span>
+                <button 
+                  className={`clean-voice-btn ${isPlayingVoice ? 'active' : ''}`}
+                  onClick={handleToggleVoice}
+                  aria-label="Listen"
+                >
+                  {isPlayingVoice ? <VolumeX size={18} /> : <Volume2 size={18} />}
                 </button>
               </div>
+
+              {result.remedy && (
+                <div className="clean-remedy-box">
+                  <h4 className="clean-remedy-title">Remedy</h4>
+                  <p className="clean-remedy-text">{result.remedy}</p>
+                </div>
+              )}
+
+              {result.prevention && !result.remedy && (
+                <div className="clean-remedy-box">
+                  <h4 className="clean-remedy-title">Care</h4>
+                  <p className="clean-remedy-text">{result.prevention}</p>
+                </div>
+              )}
+
+              <button className="clean-action-btn" onClick={handleReset}>
+                <RotateCcw size={16} />
+                <span>Analyze Another</span>
+              </button>
             </div>
           )}
         </div>
       )}
-
-      {/* BOTTOM SAFE AREA */}
-      <div style={{ height: 'var(--space-8)' }} />
     </div>
   );
 }
