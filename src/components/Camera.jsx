@@ -1,194 +1,295 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { processImage } from '../utils/imagePipeline';
+import { Camera as CameraIcon, RotateCw, X, AlertCircle } from 'lucide-react';
 
-const Camera = ({ onCapture, onCancel, isLive = false, onFrame }) => {
+export default function Camera({ onCapture, onCancel }) {
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const [stream, setStream] = useState(null);
+  const streamRef = useRef(null);
+
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState('');
-  const [isScanning, setIsScanning] = useState(true);
+  const [facingMode, setFacingMode] = useState('environment'); // 'environment' (rear) or 'user' (front)
+  const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
+  const [streamInfo, setStreamInfo] = useState(null);
+  const [isCapturing, setIsCapturing] = useState(false);
 
-  const startCamera = async () => {
+  // Check if device has multiple cameras (front & back)
+  useEffect(() => {
+    async function checkCameras() {
+      try {
+        if (navigator.mediaDevices?.enumerateDevices) {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoInputs = devices.filter(d => d.kind === 'videoinput');
+          if (videoInputs.length > 1) {
+            setHasMultipleCameras(true);
+          }
+        }
+      } catch (e) {
+        // Non-blocking fallback
+      }
+    }
+    checkCameras();
+  }, []);
+
+  // Stop active stream tracks cleanly
+  const stopTracks = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => {
+        try {
+          track.stop();
+        } catch (e) {
+          console.warn("Error stopping track", e);
+        }
+      });
+      streamRef.current = null;
+    }
+  }, []);
+
+  // Start Camera with Best Supported Resolution & FPS (60 - 120 FPS baseline)
+  const startCamera = useCallback(async (currentFacing) => {
     setError('');
     setIsReady(false);
-    
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-    }
+    stopTracks();
+
+    // 1. Preferred constraints: 4K / High resolution + 60-120 FPS target
+    const primaryConstraints = {
+      audio: false,
+      video: {
+        facingMode: { ideal: currentFacing },
+        width: { ideal: 3840, min: 1280 },
+        height: { ideal: 2160, min: 720 },
+        frameRate: { ideal: 60, max: 120 }
+      }
+    };
+
+    // 2. High-performance fallback: Full HD 1080p + 60-120 FPS target
+    const fallbackConstraints = {
+      audio: false,
+      video: {
+        facingMode: { ideal: currentFacing },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+        frameRate: { ideal: 60, max: 120 }
+      }
+    };
+
+    // 3. Basic fallback
+    const basicConstraints = {
+      audio: false,
+      video: {
+        facingMode: currentFacing
+      }
+    };
+
+    let mediaStream = null;
 
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-        audio: false,
-      });
-      
-      setStream(mediaStream);
-      
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Camera API is not supported in this browser. Please use 'Upload' or 'Take Photo'.");
+      }
+
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia(primaryConstraints);
+      } catch (err1) {
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+        } catch (err2) {
+          mediaStream = await navigator.mediaDevices.getUserMedia(basicConstraints);
+        }
+      }
+
+      streamRef.current = mediaStream;
+
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
         videoRef.current.setAttribute('playsinline', 'true');
         videoRef.current.setAttribute('muted', 'true');
-        
+
         videoRef.current.onloadedmetadata = () => {
-          videoRef.current.play().then(() => {
+          videoRef.current?.play().then(() => {
             setIsReady(true);
+
+            // Read actual hardware stream resolution & FPS (real values, no fake metrics)
+            const track = mediaStream.getVideoTracks()[0];
+            if (track?.getSettings) {
+              const settings = track.getSettings();
+              const width = settings.width || videoRef.current.videoWidth;
+              const height = settings.height || videoRef.current.videoHeight;
+              const fps = settings.frameRate ? Math.round(settings.frameRate) : null;
+              setStreamInfo({ width, height, fps });
+            }
           }).catch(err => {
-            console.error('Play error:', err);
-            setError('Could not autoplay video.');
+            console.error("Camera play error:", err);
+            setError("Unable to start video preview");
           });
         };
       }
     } catch (err) {
-      console.error('Error accessing camera:', err);
-      setError('Camera permission denied or camera not found.');
+      console.error("Camera access error:", err);
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setError("Camera permission denied. Please allow camera access in browser settings.");
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setError("No camera device found on this system.");
+      } else {
+        setError(err.message || "Failed to access camera.");
+      }
+    }
+  }, [stopTracks]);
+
+  // Start on mount or facingMode change
+  useEffect(() => {
+    startCamera(facingMode);
+    return () => {
+      stopTracks();
+    };
+  }, [facingMode, startCamera, stopTracks]);
+
+  // Toggle front / rear camera
+  const handleToggleFacingMode = () => {
+    setFacingMode(prev => (prev === 'environment' ? 'user' : 'environment'));
+  };
+
+  // High-Resolution Shutter Capture
+  const handleCapture = async () => {
+    if (!videoRef.current || !streamRef.current || isCapturing) return;
+
+    try {
+      setIsCapturing(true);
+
+      // Trigger optional haptic feedback on mobile
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(30);
+      }
+
+      const track = streamRef.current.getVideoTracks()[0];
+      let capturedDataUrl = null;
+
+      // Try ImageCapture API for native sensor capture if supported
+      if (window.ImageCapture && track) {
+        try {
+          const imageCapture = new window.ImageCapture(track);
+          const blob = await imageCapture.takePhoto();
+          capturedDataUrl = await processImage(blob);
+        } catch (icErr) {
+          console.warn("ImageCapture fallback to canvas:", icErr);
+        }
+      }
+
+      // Standard Full-Resolution Canvas Capture Fallback
+      if (!capturedDataUrl && videoRef.current) {
+        capturedDataUrl = await processImage(videoRef.current);
+      }
+
+      stopTracks();
+
+      if (capturedDataUrl && onCapture) {
+        onCapture(capturedDataUrl);
+      } else {
+        throw new Error("Failed to capture image frame");
+      }
+    } catch (err) {
+      console.error("Capture failed:", err);
+      setError(err.message || "Capture failed. Please try again.");
+      setIsCapturing(false);
     }
   };
 
-  const stopCamera = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-  }, [stream]);
-
-  useEffect(() => {
-    startCamera();
-    return () => {
-      stopCamera();
-    };
-    // eslint-disable-next-line
-  }, []);
-
-  const handleCancel = () => {
-    stopCamera();
+  const handleCancelClick = () => {
+    stopTracks();
     if (onCancel) onCancel();
   };
 
-  const captureFrame = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    
-    if (!video || !canvas) return null;
-    if (video.readyState !== 4) return null;
-    if (video.videoWidth === 0 || video.videoHeight === 0) return null;
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    // Image validation (Prevent black frame)
-    const frameData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-    let isBlack = true;
-    for (let i = 0; i < frameData.length; i += 40) {
-      if (frameData[i] > 10 || frameData[i+1] > 10 || frameData[i+2] > 10) {
-        isBlack = false;
-        break;
-      }
-    }
-
-    if (isBlack) {
-      return null;
-    }
-
-    return canvas.toDataURL("image/jpeg");
-  };
-
-  useEffect(() => {
-    let intervalId;
-    
-    if (isLive && isReady && isScanning) {
-      intervalId = setInterval(() => {
-        const image = captureFrame();
-        if (!image) {
-          console.warn("Camera not ready or frame invalid");
-          return;
-        }
-        if (onFrame) {
-          onFrame(image);
-        }
-      }, 2000);
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [isLive, isReady, isScanning, onFrame]);
-
-  const handleCaptureClick = () => {
-    const image = captureFrame();
-    if (!image) {
-      setError('Camera not ready or invalid image captured.');
-      return;
-    }
-    stopCamera();
-    if (onCapture) onCapture(image);
-  };
-
   return (
-    <div className="camera-container" style={{ position: 'relative', width: '100%', maxWidth: '600px', margin: '0 auto', overflow: 'hidden', borderRadius: '12px', background: '#000' }}>
-      {error ? (
-        <div style={{ padding: '20px', color: '#ff4444', textAlign: 'center' }}>
-          <h3>⚠️ {error}</h3>
-          <button className="btn btn-secondary" onClick={handleCancel}>Go Back</button>
+    <div className="live-camera-container">
+      {/* Top Floating Controls */}
+      <div className="camera-top-bar">
+        {streamInfo && (
+          <span className="camera-resolution-tag">
+            {streamInfo.width >= 3840 ? '4K' : streamInfo.width >= 1920 ? '1080p' : 'HD'}
+            {streamInfo.fps ? ` • ${streamInfo.fps} FPS` : ''}
+          </span>
+        )}
+
+        <button
+          className="camera-close-btn"
+          onClick={handleCancelClick}
+          aria-label="Close camera"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Video Viewfinder */}
+      <div className="camera-viewport-box">
+        <video
+          ref={videoRef}
+          playsInline
+          autoPlay
+          muted
+          className={`camera-video-feed ${isReady ? 'ready' : ''}`}
+        />
+
+        {/* Viewfinder Target Reticle */}
+        {isReady && !error && (
+          <div className="camera-reticle-overlay">
+            <div className="reticle-corner top-left" />
+            <div className="reticle-corner top-right" />
+            <div className="reticle-corner bottom-left" />
+            <div className="reticle-corner bottom-right" />
+          </div>
+        )}
+
+        {/* Loading Spinner */}
+        {!isReady && !error && (
+          <div className="camera-loading-overlay">
+            <div className="clean-spinner" />
+            <span>Connecting Camera...</span>
+          </div>
+        )}
+
+        {/* Error Overlay */}
+        {error && (
+          <div className="camera-error-overlay">
+            <AlertCircle size={28} />
+            <p className="camera-error-text">{error}</p>
+            <button className="camera-retry-btn" onClick={() => startCamera(facingMode)}>
+              Try Again
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Shutter Controls */}
+      {isReady && !error && (
+        <div className="camera-bottom-controls">
+          {/* Flip / Switch Camera Button */}
+          {hasMultipleCameras ? (
+            <button
+              className="camera-flip-btn"
+              onClick={handleToggleFacingMode}
+              aria-label="Switch Camera"
+              title="Switch Camera"
+            >
+              <RotateCw size={20} />
+            </button>
+          ) : (
+            <div style={{ width: 44 }} />
+          )}
+
+          {/* Primary Shutter Button */}
+          <button
+            className="camera-shutter-btn"
+            onClick={handleCapture}
+            disabled={isCapturing}
+            aria-label="Capture Photo"
+          >
+            <div className="shutter-inner-ring" />
+          </button>
+
+          {/* Spacer for symmetrical layout */}
+          <div style={{ width: 44 }} />
         </div>
-      ) : (
-        <>
-          <video 
-            ref={videoRef} 
-            autoPlay 
-            playsInline 
-            muted 
-            style={{ width: '100%', display: 'block', minHeight: '300px', backgroundColor: '#000' }}
-          />
-          <canvas ref={canvasRef} style={{ display: 'none' }} />
-
-          {!isReady && (
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-              <p>Initializing Camera...</p>
-            </div>
-          )}
-
-          {isReady && (
-            <div style={{ position: 'absolute', bottom: '20px', left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: '20px' }}>
-              <button onClick={handleCancel} className="btn btn-secondary" style={{ padding: '10px 20px', borderRadius: '8px' }}>
-                Cancel
-              </button>
-
-              {isLive ? (
-                <button 
-                  onClick={() => setIsScanning(!isScanning)}
-                  style={{ 
-                    padding: '10px 20px', 
-                    borderRadius: '8px', 
-                    background: isScanning ? '#ef4444' : '#10b981', 
-                    color: '#fff', 
-                    border: 'none', 
-                    fontWeight: 'bold',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {isScanning ? 'Stop Live' : 'Start Live'}
-                </button>
-              ) : (
-                <button 
-                  onClick={handleCaptureClick}
-                  style={{
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '50%',
-                    background: '#10b981',
-                    border: '4px solid #fff',
-                    cursor: 'pointer'
-                  }}
-                />
-              )}
-            </div>
-          )}
-        </>
       )}
     </div>
   );
-};
-
-export default Camera;
+}
