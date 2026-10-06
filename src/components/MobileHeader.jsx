@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { useAuth } from '../context/AuthContext';
-import { Globe, User } from 'lucide-react';
+import { Globe } from 'lucide-react';
 
 export default function MobileHeader() {
   const { language, setLanguage } = useLanguage();
-  const { user, userProfile } = useAuth();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
 
@@ -43,19 +41,20 @@ export default function MobileHeader() {
     <header className="mobile-app-header">
       <div className="mobile-header-inner">
         {/* Brand */}
-        <Link to="/" className="mobile-header-brand">
+        <Link to="/" className="mobile-header-brand" aria-label="AgroAI Home">
           <div className="mobile-logo-wrap">
-            <img src="/logo.png" alt="AgroAI" />
+            <img src="/logo.png" alt="AgroAI Logo" />
           </div>
           <span className="mobile-brand-title">AGRO AI</span>
         </Link>
 
         {/* Header Actions */}
         <div className="mobile-header-actions">
-          {/* Subtle Online/Offline dot */}
+          {/* Subtle Online/Offline indicator */}
           <span 
             className={`connection-dot ${isOnline ? 'online' : 'offline'}`}
             title={isOnline ? 'Online' : 'Offline'}
+            aria-label={isOnline ? 'Online' : 'Offline'}
           />
 
           {/* Language Switcher */}
@@ -63,7 +62,8 @@ export default function MobileHeader() {
             <button
               className="mobile-lang-btn"
               onClick={() => setLangMenuOpen(!langMenuOpen)}
-              aria-label="Language"
+              aria-label="Switch Language"
+              aria-expanded={langMenuOpen}
             >
               <Globe size={14} />
               <span>{languageLabels[language] || 'EN'}</span>
@@ -71,11 +71,16 @@ export default function MobileHeader() {
 
             {langMenuOpen && (
               <>
-                <div className="lang-menu-overlay" onClick={() => setLangMenuOpen(false)} />
-                <div className="lang-dropdown-menu">
+                <div 
+                  className="lang-menu-overlay" 
+                  onClick={() => setLangMenuOpen(false)} 
+                  aria-hidden="true" 
+                />
+                <div className="lang-dropdown-menu" role="menu">
                   {languagesList.map((l) => (
                     <button
                       key={l.code}
+                      role="menuitem"
                       className={`lang-option ${language === l.code ? 'active' : ''}`}
                       onClick={() => {
                         setLanguage(l.code);
@@ -90,13 +95,6 @@ export default function MobileHeader() {
               </>
             )}
           </div>
-
-          {/* User Profile Shortcut */}
-          <Link to="/profile" className="mobile-profile-avatar" aria-label="Profile">
-            <div className="avatar-circle">
-              {(userProfile?.name || user?.email || 'F').charAt(0).toUpperCase()}
-            </div>
-          </Link>
         </div>
       </div>
     </header>

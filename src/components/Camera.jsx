@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { processImage } from '../utils/imagePipeline';
-import { Camera as CameraIcon, RotateCw, X, AlertCircle } from 'lucide-react';
+import { RotateCw, X, AlertCircle } from 'lucide-react';
 
 export default function Camera({ onCapture, onCancel }) {
   const videoRef = useRef(null);
@@ -10,7 +10,6 @@ export default function Camera({ onCapture, onCancel }) {
   const [error, setError] = useState('');
   const [facingMode, setFacingMode] = useState('environment'); // 'environment' (rear) or 'user' (front)
   const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
-  const [streamInfo, setStreamInfo] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
 
   // Check if device has multiple cameras (front & back)
@@ -45,13 +44,13 @@ export default function Camera({ onCapture, onCancel }) {
     }
   }, []);
 
-  // Start Camera with Best Supported Resolution & FPS (60 - 120 FPS baseline)
+  // Start Camera with Best Supported Resolution & FPS (hardware native)
   const startCamera = useCallback(async (currentFacing) => {
     setError('');
     setIsReady(false);
     stopTracks();
 
-    // 1. Preferred constraints: 4K / High resolution + 60-120 FPS target
+    // 1. Preferred constraints: High resolution + native 60-120 FPS target
     const primaryConstraints = {
       audio: false,
       video: {
@@ -62,7 +61,7 @@ export default function Camera({ onCapture, onCancel }) {
       }
     };
 
-    // 2. High-performance fallback: Full HD 1080p + 60-120 FPS target
+    // 2. High-performance fallback: Full HD 1080p
     const fallbackConstraints = {
       audio: false,
       video: {
@@ -85,7 +84,7 @@ export default function Camera({ onCapture, onCancel }) {
 
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Camera API is not supported in this browser. Please use 'Upload' or 'Take Photo'.");
+        throw new Error("Camera API is not supported in this browser. Please use 'Upload Photo' or 'Take Photo'.");
       }
 
       try {
@@ -108,16 +107,6 @@ export default function Camera({ onCapture, onCancel }) {
         videoRef.current.onloadedmetadata = () => {
           videoRef.current?.play().then(() => {
             setIsReady(true);
-
-            // Read actual hardware stream resolution & FPS (real values, no fake metrics)
-            const track = mediaStream.getVideoTracks()[0];
-            if (track?.getSettings) {
-              const settings = track.getSettings();
-              const width = settings.width || videoRef.current.videoWidth;
-              const height = settings.height || videoRef.current.videoHeight;
-              const fps = settings.frameRate ? Math.round(settings.frameRate) : null;
-              setStreamInfo({ width, height, fps });
-            }
           }).catch(err => {
             console.error("Camera play error:", err);
             setError("Unable to start video preview");
@@ -156,9 +145,11 @@ export default function Camera({ onCapture, onCancel }) {
     try {
       setIsCapturing(true);
 
-      // Trigger optional haptic feedback on mobile
+      // Trigger optional haptic feedback on mobile devices
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate(30);
+        try {
+          navigator.vibrate(30);
+        } catch (_) {}
       }
 
       const track = streamRef.current.getVideoTracks()[0];
@@ -203,12 +194,7 @@ export default function Camera({ onCapture, onCancel }) {
     <div className="live-camera-container">
       {/* Top Floating Controls */}
       <div className="camera-top-bar">
-        {streamInfo && (
-          <span className="camera-resolution-tag">
-            {streamInfo.width >= 3840 ? '4K' : streamInfo.width >= 1920 ? '1080p' : 'HD'}
-            {streamInfo.fps ? ` • ${streamInfo.fps} FPS` : ''}
-          </span>
-        )}
+        <span className="camera-live-label">LIVE CAMERA</span>
 
         <button
           className="camera-close-btn"
@@ -231,7 +217,7 @@ export default function Camera({ onCapture, onCancel }) {
 
         {/* Viewfinder Target Reticle */}
         {isReady && !error && (
-          <div className="camera-reticle-overlay">
+          <div className="camera-reticle-overlay" aria-hidden="true">
             <div className="reticle-corner top-left" />
             <div className="reticle-corner top-right" />
             <div className="reticle-corner bottom-left" />

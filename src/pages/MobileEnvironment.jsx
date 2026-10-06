@@ -21,7 +21,7 @@ import { getWeatherData } from '../services/weatherService';
 /**
  * Maps icon types to Lucide React icon components.
  */
-function WeatherIconComponent({ type, size = 48, className = '' }) {
+function WeatherIconComponent({ type, size = 52, className = '' }) {
   switch (type) {
     case 'Sun':
       return <Sun size={size} className={className} />;
@@ -46,56 +46,56 @@ function WeatherIconComponent({ type, size = 48, className = '' }) {
 
 export default function MobileEnvironment() {
   /**
-   * Environment permission & data states:
-   * 1. 'idle'        - Initial state: Location not enabled. Show permission request & [ALLOW LOCATION]
-   * 2. 'requesting'  - Requesting location: clean loading animation
-   * 3. 'denied'      - Permission denied: "Location access is required to show local weather." [TRY AGAIN]
-   * 4. 'unavailable' - Location unavailable: "Unable to determine your location." [TRY AGAIN]
-   * 5. 'loading'     - Weather loading: skeleton / loading state
-   * 6. 'loaded'      - Weather loaded: complete weather dashboard
-   * 7. 'error'       - Weather API error: "Weather data is temporarily unavailable." [RETRY]
+   * Explicit Permission & Weather States:
+   * - 'NOT_REQUESTED'
+   * - 'GRANTING'
+   * - 'DENIED'
+   * - 'UNAVAILABLE'
+   * - 'TIMEOUT'
+   * - 'WEATHER_LOADING'
+   * - 'WEATHER_ERROR'
+   * - 'WEATHER_SUCCESS'
    */
-  const [state, setState] = useState('idle');
+  const [permissionState, setPermissionState] = useState('NOT_REQUESTED');
   const [coords, setCoords] = useState(null);
   const [weather, setWeather] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState('');
 
-  // Fetch weather data for given coordinates
+  // Fetch real weather data for given coordinates
   const loadWeather = useCallback(async (latitude, longitude, isManualRefresh = false) => {
     if (isManualRefresh) {
       setRefreshing(true);
       setRefreshError('');
     } else {
-      setState('loading');
+      setPermissionState('WEATHER_LOADING');
     }
 
     try {
       const data = await getWeatherData(latitude, longitude, { forceRefresh: isManualRefresh });
       setWeather(data);
-      setState('loaded');
+      setPermissionState('WEATHER_SUCCESS');
       setRefreshError('');
     } catch (err) {
       console.error('[MobileEnvironment] Weather fetch error:', err);
       if (isManualRefresh && weather) {
-        // Keep existing valid weather if a background refresh fails
         setRefreshError('Could not refresh weather right now');
       } else {
-        setState('error');
+        setPermissionState('WEATHER_ERROR');
       }
     } finally {
       setRefreshing(false);
     }
   }, [weather]);
 
-  // Request browser geolocation permission strictly upon user interaction
+  // Request browser geolocation strictly upon user interaction
   const handleAllowLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      setState('unavailable');
+      setPermissionState('UNAVAILABLE');
       return;
     }
 
-    setState('requesting');
+    setPermissionState('GRANTING');
     setRefreshError('');
 
     navigator.geolocation.getCurrentPosition(
@@ -108,10 +108,15 @@ export default function MobileEnvironment() {
         console.warn('[MobileEnvironment] Geolocation error:', error.code, error.message);
         if (error.code === 1) {
           // PERMISSION_DENIED
-          setState('denied');
+          setPermissionState('DENIED');
+        } else if (error.code === 2) {
+          // POSITION_UNAVAILABLE
+          setPermissionState('UNAVAILABLE');
+        } else if (error.code === 3) {
+          // TIMEOUT
+          setPermissionState('TIMEOUT');
         } else {
-          // 2 = POSITION_UNAVAILABLE, 3 = TIMEOUT
-          setState('unavailable');
+          setPermissionState('UNAVAILABLE');
         }
       },
       {
@@ -122,7 +127,7 @@ export default function MobileEnvironment() {
     );
   }, [loadWeather]);
 
-  // Handle manual refresh
+  // Handle weather refresh using already acquired coordinates (no re-prompting)
   const handleRefresh = useCallback(() => {
     if (!coords) return;
     loadWeather(coords.latitude, coords.longitude, true);
@@ -131,9 +136,9 @@ export default function MobileEnvironment() {
   return (
     <div className="mobile-page-content mobile-env-screen">
       {/* ========================================================
-          STATE 1: Location not enabled (Initial clean request)
+          STATE 1: NOT REQUESTED (Initial state - DO NOT show weather)
           ======================================================== */}
-      {state === 'idle' && (
+      {permissionState === 'NOT_REQUESTED' && (
         <div className="env-state-card env-permission-box">
           <div className="env-globe-icon-wrap" aria-hidden="true">
             <span className="env-globe-emoji">🌍</span>
@@ -142,7 +147,7 @@ export default function MobileEnvironment() {
           <h2 className="env-permission-title">Environment</h2>
 
           <p className="env-permission-sub">
-            Allow location to view your local weather
+            Allow location to view local weather
           </p>
 
           <button
@@ -157,11 +162,11 @@ export default function MobileEnvironment() {
       )}
 
       {/* ========================================================
-          STATE 2: Requesting location (Clean loading animation)
+          STATE 2: GRANTING (Geolocation in progress)
           ======================================================== */}
-      {state === 'requesting' && (
+      {permissionState === 'GRANTING' && (
         <div className="env-state-card env-loading-box">
-          <div className="env-radar-wrap">
+          <div className="env-radar-wrap" aria-hidden="true">
             <div className="env-radar-pulse" />
             <div className="env-radar-pulse env-radar-pulse-2" />
             <div className="env-radar-center">
@@ -171,16 +176,16 @@ export default function MobileEnvironment() {
 
           <h3 className="env-state-title">Requesting Location</h3>
           <p className="env-state-sub">
-            Detecting your device GPS coordinates...
+            Detecting device GPS coordinates...
           </p>
         </div>
       )}
 
       {/* ========================================================
-          STATE 3: Location permission denied
+          STATE 3: DENIED (Permission denied)
           ======================================================== */}
-      {state === 'denied' && (
-        <div className="env-state-card env-error-box">
+      {permissionState === 'DENIED' && (
+        <div className="env-state-card env-error-box" role="alert">
           <div className="env-error-icon-wrap">
             <AlertCircle size={38} className="env-error-icon" />
           </div>
@@ -202,17 +207,17 @@ export default function MobileEnvironment() {
       )}
 
       {/* ========================================================
-          STATE 4: Location unavailable
+          STATE 4: UNAVAILABLE (Position unavailable)
           ======================================================== */}
-      {state === 'unavailable' && (
-        <div className="env-state-card env-error-box">
+      {permissionState === 'UNAVAILABLE' && (
+        <div className="env-state-card env-error-box" role="alert">
           <div className="env-error-icon-wrap">
             <AlertCircle size={38} className="env-error-icon" />
           </div>
 
           <h3 className="env-state-title">Location Unavailable</h3>
           <p className="env-state-sub">
-            Unable to determine your location.
+            Unable to determine your location. Please check your device location settings.
           </p>
 
           <button
@@ -227,9 +232,34 @@ export default function MobileEnvironment() {
       )}
 
       {/* ========================================================
-          STATE 5: Weather loading (Premium skeleton state)
+          STATE 5: TIMEOUT (Geolocation timeout)
           ======================================================== */}
-      {state === 'loading' && (
+      {permissionState === 'TIMEOUT' && (
+        <div className="env-state-card env-error-box" role="alert">
+          <div className="env-error-icon-wrap">
+            <AlertCircle size={38} className="env-error-icon" />
+          </div>
+
+          <h3 className="env-state-title">Location Request Timed Out</h3>
+          <p className="env-state-sub">
+            Unable to acquire GPS signal. Please check your network and try again.
+          </p>
+
+          <button
+            type="button"
+            id="try-again-timeout-btn"
+            onClick={handleAllowLocation}
+            className="env-secondary-btn"
+          >
+            TRY AGAIN
+          </button>
+        </div>
+      )}
+
+      {/* ========================================================
+          STATE 6: WEATHER LOADING (Skeleton state)
+          ======================================================== */}
+      {permissionState === 'WEATHER_LOADING' && (
         <div className="env-skeleton-wrapper" aria-label="Loading local weather">
           <div className="env-skeleton-hero">
             <div className="env-skeleton-line env-sk-location shimmer-effect" />
@@ -249,9 +279,9 @@ export default function MobileEnvironment() {
       )}
 
       {/* ========================================================
-          STATE 6: Weather loaded (Premium weather dashboard)
+          STATE 7: WEATHER SUCCESS (Loaded weather dashboard)
           ======================================================== */}
-      {state === 'loaded' && weather && (
+      {permissionState === 'WEATHER_SUCCESS' && weather && (
         <div className="env-dashboard">
           {/* Header Bar */}
           <div className="env-header-row">
@@ -281,7 +311,7 @@ export default function MobileEnvironment() {
           </div>
 
           {refreshError && (
-            <div className="env-refresh-banner">
+            <div className="env-refresh-banner" role="status">
               <span>{refreshError}</span>
             </div>
           )}
@@ -353,7 +383,7 @@ export default function MobileEnvironment() {
                   <Wind size={18} />
                 </div>
                 <span className="env-metric-value">{weather.windSpeed} km/h</span>
-                <span className="env-metric-label">Wind speed</span>
+                <span className="env-metric-label">Wind</span>
               </div>
             )}
           </div>
@@ -361,10 +391,10 @@ export default function MobileEnvironment() {
       )}
 
       {/* ========================================================
-          STATE 7: Weather API error
+          STATE 8: WEATHER ERROR (Weather API error)
           ======================================================== */}
-      {state === 'error' && (
-        <div className="env-state-card env-error-box">
+      {permissionState === 'WEATHER_ERROR' && (
+        <div className="env-state-card env-error-box" role="alert">
           <div className="env-error-icon-wrap">
             <AlertCircle size={38} className="env-error-icon" />
           </div>

@@ -14,7 +14,7 @@ export default function MobileMarket() {
   const [searchQuery, setSearchQuery] = useState('');
   const [displayLimit, setDisplayLimit] = useState(INITIAL_DISPLAY_LIMIT);
 
-  // Fetch real data
+  // Fetch real data from live Agmarknet / Mandi endpoint
   const loadPrices = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) {
       setRefreshing(true);
@@ -43,7 +43,7 @@ export default function MobileMarket() {
     loadPrices(false);
   }, [loadPrices]);
 
-  // Memoized search filter for 120 FPS performance
+  // Search filter
   const filteredPrices = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return marketPrices;
@@ -102,7 +102,7 @@ export default function MobileMarket() {
 
       {/* Minimal Search Bar */}
       <div className="clean-search-bar">
-        <Search size={16} className="clean-search-icon" />
+        <Search size={16} className="clean-search-icon" aria-hidden="true" />
         <input
           type="text"
           placeholder="Search crop or market..."
@@ -112,6 +112,7 @@ export default function MobileMarket() {
             setDisplayLimit(INITIAL_DISPLAY_LIMIT);
           }}
           className="clean-search-input"
+          aria-label="Search commodity or market"
         />
         {searchQuery && (
           <button
@@ -121,14 +122,16 @@ export default function MobileMarket() {
               setSearchQuery('');
               setDisplayLimit(INITIAL_DISPLAY_LIMIT);
             }}
-            aria-label="Clear search"
+            aria-label="Clear search query"
           >
             ✕
           </button>
         )}
       </div>
 
-      {/* DATA STATES */}
+      {/* ====================================================
+          DATA STATES
+          ==================================================== */}
 
       {/* 1. Loading State */}
       {loading && marketPrices.length === 0 && (
@@ -140,7 +143,7 @@ export default function MobileMarket() {
 
       {/* 2. Error State */}
       {!loading && error && marketPrices.length === 0 && (
-        <div className="market-state-container market-error-state">
+        <div className="market-state-container market-error-state" role="alert">
           <AlertCircle size={36} className="market-error-icon" />
           <p className="market-error-title">Market Data Unavailable</p>
           <p className="market-state-text">

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { analyzeImage } from '../services/aiService';
+import { validateInput } from '../services/localAnalysis';
 import { saveUploadRecord, saveResult } from '../services/uploadService';
 import { processImage } from '../utils/imagePipeline';
 import Camera from '../components/Camera';
@@ -11,13 +12,14 @@ import {
   Video, 
   Camera as CameraIcon, 
   RotateCcw, 
+  Trash2,
   Volume2, 
   VolumeX, 
   AlertCircle,
   ShieldCheck,
   Info
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export default function MobileDisease() {
   const [searchParams] = useSearchParams();
@@ -27,7 +29,7 @@ export default function MobileDisease() {
   const fileInputRef = useRef(null);
   const takePhotoInputRef = useRef(null);
 
-  // View state: 'select' (3 options), 'live-camera' (WebRTC), 'preview' (Image selected), 'result' (Analysis done)
+  // View state: 'select' (3 primary options), 'live-camera' (WebRTC), 'preview' (Image selected), 'result' (Analysis complete)
   const [currentView, setCurrentView] = useState(() => {
     const mode = searchParams.get('mode');
     if (mode === 'camera' || mode === 'live') return 'live-camera';
@@ -40,7 +42,7 @@ export default function MobileDisease() {
   const [errorMsg, setErrorMsg] = useState('');
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
 
-  // Cleanup speech synthesis if active on unmount
+  // Cleanup speech synthesis on unmount
   useEffect(() => {
     return () => {
       if (window.speechSynthesis) {
@@ -93,8 +95,8 @@ export default function MobileDisease() {
     setCurrentView('preview');
   };
 
-  // RETAKE / REMOVE / RESET
-  const handleReset = () => {
+  // REMOVE / RESET IMAGE
+  const handleRemoveImage = () => {
     setPreviewUrl(null);
     setResult(null);
     setErrorMsg('');
@@ -107,7 +109,12 @@ export default function MobileDisease() {
     setIsPlayingVoice(false);
   };
 
-  // 4. DISEASE ANALYSIS (EXISTING AI / BACKEND MODEL)
+  // REPLACE IMAGE (TRIGGER UPLOAD)
+  const handleReplaceImage = () => {
+    fileInputRef.current?.click();
+  };
+
+  // 4. DISEASE ANALYSIS (PRESERVED AI INFERENCE)
   const handleAnalyze = async () => {
     if (!previewUrl) return;
 
@@ -117,7 +124,6 @@ export default function MobileDisease() {
 
     try {
       // Input validation using existing local validator
-      const { validateInput } = await import('../services/localAnalysis');
       const validationStatus = await validateInput(previewUrl, 'plant');
 
       if (!validationStatus.isValidCrop) {
@@ -127,7 +133,7 @@ export default function MobileDisease() {
         return;
       }
 
-      // Execute AI inference via existing service
+      // Execute AI inference via preserved service
       const aiResult = await analyzeImage(previewUrl, language, 'plant');
 
       // Persist to user history if authenticated
@@ -152,7 +158,7 @@ export default function MobileDisease() {
     }
   };
 
-  // VOICE READOUT
+  // VOICE READOUT (ACCESSIBLE AUDIO READOUT)
   const handleToggleVoice = () => {
     if (!window.speechSynthesis || !result) return;
 
@@ -209,7 +215,7 @@ export default function MobileDisease() {
       />
 
       {/* ====================================================
-          STAGE 1: THREE CLEAR INPUT OPTIONS (SELECT VIEW)
+          STAGE 1: THREE PRIMARY INPUT METHODS (SELECT VIEW)
           ==================================================== */}
       {currentView === 'select' && (
         <div className="disease-input-options-container">
@@ -218,13 +224,17 @@ export default function MobileDisease() {
             className="disease-input-card"
             whileTap={{ scale: 0.98 }}
             onClick={() => fileInputRef.current?.click()}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+            aria-label="Upload Photo from device"
           >
             <div className="disease-input-icon-wrap upload">
               <UploadCloud size={24} />
             </div>
             <div className="disease-input-card-info">
               <span className="disease-input-card-title">Upload Photo</span>
-              <span className="disease-input-card-desc">Choose from device gallery (JPG, PNG, WebP)</span>
+              <span className="disease-input-card-desc">Choose JPG, PNG, or WebP from device</span>
             </div>
           </motion.div>
 
@@ -233,13 +243,17 @@ export default function MobileDisease() {
             className="disease-input-card"
             whileTap={{ scale: 0.98 }}
             onClick={() => setCurrentView('live-camera')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setCurrentView('live-camera'); }}
+            aria-label="Open Live Camera viewfinder"
           >
             <div className="disease-input-icon-wrap live">
               <Video size={24} />
             </div>
             <div className="disease-input-card-info">
               <span className="disease-input-card-title">Live Camera</span>
-              <span className="disease-input-card-desc">Real-time viewfinder with camera controls</span>
+              <span className="disease-input-card-desc">Real-time viewfinder with shutter capture</span>
             </div>
           </motion.div>
 
@@ -248,18 +262,22 @@ export default function MobileDisease() {
             className="disease-input-card"
             whileTap={{ scale: 0.98 }}
             onClick={() => takePhotoInputRef.current?.click()}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') takePhotoInputRef.current?.click(); }}
+            aria-label="Take Photo using native camera"
           >
             <div className="disease-input-icon-wrap photo">
               <CameraIcon size={24} />
             </div>
             <div className="disease-input-card-info">
               <span className="disease-input-card-title">Take Photo</span>
-              <span className="disease-input-card-desc">Quick capture using device camera</span>
+              <span className="disease-input-card-desc">Instant capture with device camera app</span>
             </div>
           </motion.div>
 
           {errorMsg && (
-            <div className="clean-error-alert">
+            <div className="clean-error-alert" role="alert">
               <AlertCircle size={16} />
               <span>{errorMsg}</span>
             </div>
@@ -280,7 +298,7 @@ export default function MobileDisease() {
       )}
 
       {/* ====================================================
-          STAGE 3: IMAGE PREVIEW & ANALYZE ACTION
+          STAGE 3: IMAGE PREVIEW & ACTIONS (ANALYZE / REPLACE / REMOVE)
           ==================================================== */}
       {currentView === 'preview' && previewUrl && (
         <div className="clean-preview-wrapper">
@@ -290,14 +308,30 @@ export default function MobileDisease() {
               alt="Crop Leaf Preview" 
               className="clean-preview-img" 
             />
-            <button 
-              className="clean-retake-btn" 
-              onClick={handleReset}
-              disabled={analyzing}
-            >
-              <RotateCcw size={15} />
-              <span>Retake</span>
-            </button>
+            <div className="clean-preview-overlay-actions">
+              <button 
+                type="button"
+                className="clean-preview-pill-btn" 
+                onClick={handleReplaceImage}
+                disabled={analyzing}
+                title="Replace Image"
+                aria-label="Replace Image"
+              >
+                <RotateCcw size={14} />
+                <span>Replace</span>
+              </button>
+              <button 
+                type="button"
+                className="clean-preview-pill-btn danger" 
+                onClick={handleRemoveImage}
+                disabled={analyzing}
+                title="Remove Image"
+                aria-label="Remove Image"
+              >
+                <Trash2 size={14} />
+                <span>Remove</span>
+              </button>
+            </div>
           </div>
 
           {analyzing ? (
@@ -306,13 +340,17 @@ export default function MobileDisease() {
               <span className="clean-loading-text">Analyzing Crop Health...</span>
             </div>
           ) : (
-            <button className="clean-analyze-btn" onClick={handleAnalyze}>
+            <button 
+              type="button" 
+              className="clean-analyze-btn" 
+              onClick={handleAnalyze}
+            >
               Analyze
             </button>
           )}
 
           {errorMsg && (
-            <div className="clean-error-alert">
+            <div className="clean-error-alert" role="alert">
               <AlertCircle size={16} />
               <span>{errorMsg}</span>
             </div>
@@ -332,7 +370,7 @@ export default function MobileDisease() {
               <p className="clean-result-text">
                 {result.message || 'Please provide a clear crop leaf photo.'}
               </p>
-              <button className="clean-action-btn" onClick={handleReset}>
+              <button type="button" className="clean-action-btn" onClick={handleRemoveImage}>
                 <RotateCcw size={16} />
                 <span>Try Another Image</span>
               </button>
@@ -358,9 +396,10 @@ export default function MobileDisease() {
                 </div>
 
                 <button 
+                  type="button"
                   className={`clean-voice-btn ${isPlayingVoice ? 'active' : ''}`}
                   onClick={handleToggleVoice}
-                  aria-label="Listen"
+                  aria-label={isPlayingVoice ? "Stop audio readout" : "Listen to diagnosis"}
                   title="Listen"
                 >
                   {isPlayingVoice ? <VolumeX size={18} /> : <Volume2 size={18} />}
@@ -401,7 +440,7 @@ export default function MobileDisease() {
               )}
 
               {/* Analyze Another Image Action */}
-              <button className="clean-action-btn" onClick={handleReset}>
+              <button type="button" className="clean-action-btn" onClick={handleRemoveImage}>
                 <RotateCcw size={16} />
                 <span>Analyze Another Image</span>
               </button>
