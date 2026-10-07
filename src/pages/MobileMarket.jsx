@@ -198,13 +198,13 @@ export default function MobileMarket() {
                     <span className="market-card-price">
                       ₹{item.currentPrice.toLocaleString('en-IN')}
                     </span>
-                    <span className="market-card-unit">{item.unit}</span>
+                    <span className="market-card-unit">/ {item.unit}</span>
                   </div>
                 </div>
 
                 <div className="market-card-middle">
                   <span className="market-card-location">
-                    {item.market}
+                    <strong className="market-name-strong">{item.market}</strong>
                     {item.district ? ` · ${item.district}` : ''}
                     {item.state ? `, ${item.state}` : ''}
                   </span>

@@ -30,7 +30,7 @@ export default function Camera({ onCapture, onCancel }) {
     checkCameras();
   }, []);
 
-  // Stop active stream tracks cleanly
+  // Stop active stream tracks cleanly and release hardware camera
   const stopTracks = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => {
@@ -42,37 +42,38 @@ export default function Camera({ onCapture, onCancel }) {
       });
       streamRef.current = null;
     }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
   }, []);
 
-  // Start Camera with Best Supported Resolution & FPS (hardware native)
+  // Start Camera with Highest Practical Supported Resolution
   const startCamera = useCallback(async (currentFacing) => {
     setError('');
     setIsReady(false);
     stopTracks();
 
-    // 1. Preferred constraints: High resolution + native 60-120 FPS target
+    // 1. Practical high resolution target (up to 4K / 1080p without restrictive min bounds)
     const primaryConstraints = {
       audio: false,
       video: {
         facingMode: { ideal: currentFacing },
-        width: { ideal: 3840, min: 1280 },
-        height: { ideal: 2160, min: 720 },
-        frameRate: { ideal: 60, max: 120 }
+        width: { ideal: 1920, max: 3840 },
+        height: { ideal: 1080, max: 2160 },
       }
     };
 
-    // 2. High-performance fallback: Full HD 1080p
+    // 2. High-performance fallback: 720p HD
     const fallbackConstraints = {
       audio: false,
       video: {
         facingMode: { ideal: currentFacing },
-        width: { ideal: 1920 },
-        height: { ideal: 1080 },
-        frameRate: { ideal: 60, max: 120 }
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
       }
     };
 
-    // 3. Basic fallback
+    // 3. Basic device fallback
     const basicConstraints = {
       audio: false,
       video: {
@@ -102,6 +103,7 @@ export default function Camera({ onCapture, onCancel }) {
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
         videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('webkit-playsinline', 'true');
         videoRef.current.setAttribute('muted', 'true');
 
         videoRef.current.onloadedmetadata = () => {
@@ -212,7 +214,7 @@ export default function Camera({ onCapture, onCancel }) {
           playsInline
           autoPlay
           muted
-          className={`camera-video-feed ${isReady ? 'ready' : ''}`}
+          className={`camera-video-feed ${isReady ? 'ready' : ''} ${facingMode === 'user' ? 'mirrored' : ''}`}
         />
 
         {/* Viewfinder Target Reticle */}

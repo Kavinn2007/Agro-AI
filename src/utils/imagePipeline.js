@@ -1,6 +1,7 @@
 /**
  * AgroAI High-Fidelity Image Pipeline
- * Preserves high resolution (up to 4K / 3840px) without unnecessary downscaling or false upscaling.
+ * Preserves untouched original quality for uploads without unnecessary recompression.
+ * Captures live camera frames at native sensor resolution with high-fidelity smoothing.
  */
 export async function processImage(source) {
   return new Promise((resolve, reject) => {
@@ -9,7 +10,7 @@ export async function processImage(source) {
         return reject(new Error("Invalid image source"));
       }
 
-      // 1. Direct Data URL String
+      // 1. Direct Data URL String or Object URL
       if (typeof source === 'string') {
         if (!source.startsWith('data:image/') && !source.startsWith('blob:') && !source.startsWith('http') && !source.startsWith('/')) {
           return reject(new Error("Unsupported image format"));
@@ -34,29 +35,41 @@ export async function processImage(source) {
 
         img.onload = () => {
           URL.revokeObjectURL(objectUrl);
-          let width = img.naturalWidth || img.width;
-          let height = img.naturalHeight || img.height;
+          const width = img.naturalWidth || img.width;
+          const height = img.naturalHeight || img.height;
 
           if (!width || !height) {
             return reject(new Error("Unable to determine image dimensions"));
           }
 
-          // Preserve high resolution up to 4K UHD (3840px max edge to avoid mobile canvas memory crashes)
-          // NEVER upscale lower resolution images.
           const MAX_DIMENSION = 3840;
+
+          // Preserve 100% original image quality if image is within bounds
+          // Avoids unnecessary re-compression, blur, or loss of clarity
+          if (width <= MAX_DIMENSION && height <= MAX_DIMENSION && source.size <= 15 * 1024 * 1024) {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error("Failed to read image file"));
+            reader.readAsDataURL(source);
+            return;
+          }
+
+          // If image exceeds practical 4K bounds, downscale proportionally (NEVER upscale)
+          let targetWidth = width;
+          let targetHeight = height;
           if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
             if (width > height) {
-              height = Math.round((height * MAX_DIMENSION) / width);
-              width = MAX_DIMENSION;
+              targetHeight = Math.round((height * MAX_DIMENSION) / width);
+              targetWidth = MAX_DIMENSION;
             } else {
-              width = Math.round((width * MAX_DIMENSION) / height);
-              height = MAX_DIMENSION;
+              targetWidth = Math.round((width * MAX_DIMENSION) / height);
+              targetHeight = MAX_DIMENSION;
             }
           }
 
           const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
           const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: true });
           
           if (!ctx) {
@@ -65,10 +78,10 @@ export async function processImage(source) {
 
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(img, 0, 0, width, height);
+          ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
-          // Preserve high quality: 0.92 JPEG gives visually lossless quality
-          const outputDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+          // High-fidelity JPEG export at 0.95 quality
+          const outputDataUrl = canvas.toDataURL('image/jpeg', 0.95);
           resolve(outputDataUrl);
         };
 

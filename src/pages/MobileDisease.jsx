@@ -384,15 +384,25 @@ export default function MobileDisease() {
                 </div>
               )}
 
-              {/* Diagnosis Header */}
+              {/* 2. Detected Disease (Visually Dominant) & 3. Confidence */}
               <div className="clean-result-header">
-                <div>
+                <div className="clean-result-title-group">
+                  <span className={`clean-result-status-tag ${result.disease === 'Healthy' ? 'healthy' : 'disease'}`}>
+                    {result.disease === 'Healthy' ? 'HEALTHY' : 'DETECTED CONDITION'}
+                  </span>
                   <h3 className="clean-result-name">
                     {result.disease === 'Healthy' ? 'Healthy Crop' : result.disease}
                   </h3>
-                  <span className="clean-result-confidence">
-                    {result.crop && `${result.crop} • `}{result.confidence || 95}% Confidence
-                  </span>
+                  <div className="clean-result-meta-badges">
+                    <span className="clean-confidence-pill">
+                      {result.confidence || 95}% Confidence
+                    </span>
+                    {result.crop && (
+                      <span className="clean-crop-pill">
+                        {result.crop}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <button 
