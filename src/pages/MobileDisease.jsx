@@ -178,10 +178,11 @@ export default function MobileDisease() {
     };
 
     let textToRead = '';
+    const reliabilityText = result.reliabilityLabel ? `Status: ${result.reliabilityLabel}.` : '';
     if (result.disease === 'Healthy') {
-      textToRead = `${result.crop || 'Plant'} is healthy. No critical diseases detected.`;
+      textToRead = `AI Prediction: ${result.crop || 'Plant'} is healthy. Confidence: ${result.confidence || 75}%. ${reliabilityText}`;
     } else {
-      textToRead = `Detected: ${result.crop || 'Crop'} with ${result.disease}. Remedy: ${result.remedy || result.prevention || 'Consult agricultural specialist.'}`;
+      textToRead = `AI Prediction: ${result.crop || 'Crop'} with ${result.disease}. Confidence: ${result.confidence || 75}%. ${reliabilityText} Treatment: ${result.remedy || result.prevention || 'Consult local agricultural extension officer.'}`;
     }
 
     const utterance = new SpeechSynthesisUtterance(textToRead);
@@ -359,18 +360,26 @@ export default function MobileDisease() {
       )}
 
       {/* ====================================================
-          STAGE 4: AI RESULT SCREEN
+          STAGE 4: AI RESULT SCREEN (SAFE & RESPONSIBLE)
           ==================================================== */}
       {currentView === 'result' && result && (
         <div className="clean-result-container">
           {!result.isValidCrop ? (
             <div className="clean-result-card error">
               <AlertCircle size={32} className="result-error-icon" />
-              <h3 className="clean-result-title">No Crop Recognized</h3>
+              <h3 className="clean-result-title">Image Quality Check</h3>
               <p className="clean-result-text">
-                {result.message || 'Please provide a clear crop leaf photo.'}
+                {result.message || 'Image quality is too low for reliable analysis.'}
               </p>
-              <button type="button" className="clean-action-btn" onClick={handleRemoveImage}>
+              <p className="clean-result-subtext" style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: 600 }}>
+                {result.subMessage || 'Please capture a clearer photo.'}
+              </p>
+              {result.guidance && (
+                <p className="clean-result-guidance" style={{ fontSize: '0.80rem', color: 'var(--text-muted)', marginTop: '8px', maxWidth: '340px' }}>
+                  {result.guidance}
+                </p>
+              )}
+              <button type="button" className="clean-action-btn" onClick={handleRemoveImage} style={{ marginTop: '1.2rem' }}>
                 <RotateCcw size={16} />
                 <span>Try Another Image</span>
               </button>
@@ -384,18 +393,23 @@ export default function MobileDisease() {
                 </div>
               )}
 
-              {/* 2. Detected Disease (Visually Dominant) & 3. Confidence */}
+              {/* Detected Condition & Confidence Header */}
               <div className="clean-result-header">
                 <div className="clean-result-title-group">
-                  <span className={`clean-result-status-tag ${result.disease === 'Healthy' ? 'healthy' : 'disease'}`}>
-                    {result.disease === 'Healthy' ? 'HEALTHY' : 'DETECTED CONDITION'}
+                  <span className={`clean-result-status-tag ${result.badgeClass || (result.disease === 'Healthy' ? 'healthy' : 'disease')}`}>
+                    {result.reliabilityLabel || (result.disease === 'Healthy' ? 'SUPPORTED / HIGH CONFIDENCE' : 'AI PREDICTION')}
                   </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
+                    <span style={{ fontSize: '0.70rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>
+                      AI Prediction
+                    </span>
+                  </div>
                   <h3 className="clean-result-name">
-                    {result.disease === 'Healthy' ? 'Healthy Crop' : result.disease}
+                    {result.disease === 'Healthy' ? `${result.crop || 'Crop'} (Healthy)` : result.disease}
                   </h3>
                   <div className="clean-result-meta-badges">
-                    <span className="clean-confidence-pill">
-                      {result.confidence || 95}% Confidence
+                    <span className={`clean-confidence-pill ${result.badgeClass || 'high-confidence'}`}>
+                      {result.confidence || 75}% Confidence
                     </span>
                     {result.crop && (
                       <span className="clean-crop-pill">
@@ -409,12 +423,60 @@ export default function MobileDisease() {
                   type="button"
                   className={`clean-voice-btn ${isPlayingVoice ? 'active' : ''}`}
                   onClick={handleToggleVoice}
-                  aria-label={isPlayingVoice ? "Stop audio readout" : "Listen to diagnosis"}
+                  aria-label={isPlayingVoice ? "Stop audio readout" : "Listen to prediction"}
                   title="Listen"
                 >
                   {isPlayingVoice ? <VolumeX size={18} /> : <Volume2 size={18} />}
                 </button>
               </div>
+
+              {/* Prediction Uncertainty Notice if Ambiguous or Low Confidence */}
+              {result.reliability === 'UNCERTAIN' && (
+                <div className="clean-remedy-box uncertain">
+                  <div className="detail-header-row" style={{ color: '#f97316' }}>
+                    <AlertCircle size={15} />
+                    <h4 className="clean-remedy-title" style={{ color: '#fdba74' }}>Prediction Uncertainty Notice</h4>
+                  </div>
+                  <p className="clean-remedy-text">
+                    {result.uncertaintyReason || 'The AI detected visual ambiguity or moderate confidence. Please retake or upload a clearer, well-lit photo of a single leaf to confirm.'}
+                  </p>
+                </div>
+              )}
+
+              {/* Dataset Scope Warning if Crop is Outside Supported PlantVillage Classes */}
+              {!result.isSupportedCrop && (
+                <div className="clean-remedy-box scope-notice">
+                  <div className="detail-header-row" style={{ color: '#eab308' }}>
+                    <Info size={15} />
+                    <h4 className="clean-remedy-title" style={{ color: '#fde047' }}>Dataset Scope Notice</h4>
+                  </div>
+                  <p className="clean-remedy-text">
+                    This crop is outside the 14 trained PlantVillage crops (Apple, Blueberry, Cherry, Corn, Grape, Orange, Peach, Pepper, Potato, Raspberry, Soybean, Squash, Strawberry, Tomato). AI diagnosis cannot be certified for unverified crops.
+                  </p>
+                </div>
+              )}
+
+              {/* Top Prediction Candidates */}
+              {Array.isArray(result.topPredictions) && result.topPredictions.length > 1 && (
+                <div className="clean-remedy-box alternatives">
+                  <div className="detail-header-row" style={{ color: '#c084fc' }}>
+                    <Info size={15} />
+                    <h4 className="clean-remedy-title" style={{ color: '#d8b4fe' }}>Top Prediction Candidates</h4>
+                  </div>
+                  <div className="clean-candidates-list">
+                    {result.topPredictions.map((cand, idx) => (
+                      <div key={idx} className="clean-candidate-row">
+                        <span className="clean-candidate-title">
+                          {cand.crop ? `${cand.crop} — ` : ''}{cand.disease}
+                        </span>
+                        <span className="clean-candidate-val">
+                          {cand.confidence}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Symptoms / Disease Observations */}
               {result.symptoms && (

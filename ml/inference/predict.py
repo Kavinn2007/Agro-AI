@@ -171,8 +171,22 @@ def predict_disease(image_input, model_path="ml/models/best_model.pth", class_js
     model = model.to(dev)
     model.eval()
 
-    # 2. Preprocess
-    tensor, _ = preprocess_image(image_input, img_size=img_size)
+    # 2. Preprocess & Image Quality Inspection
+    tensor, raw_pil_img = preprocess_image(image_input, img_size=img_size)
+
+    # Resolution Check
+    if raw_pil_img.width < 120 or raw_pil_img.height < 120:
+        raise ValueError("Image quality is too low for reliable analysis. Please capture a clearer photo (minimum 120x120 px).")
+
+    # Extreme Darkness / Brightness Check
+    import numpy as np
+    gray_arr = np.array(raw_pil_img.convert("L"))
+    mean_lum = float(np.mean(gray_arr))
+    if mean_lum < 24.0:
+        raise ValueError("Image quality is too low for reliable analysis. Image is extremely dark. Please capture a clearer photo.")
+    if mean_lum > 238.0:
+        raise ValueError("Image quality is too low for reliable analysis. Image is overexposed/too bright. Please capture a clearer photo.")
+
     tensor = tensor.to(dev)
 
     # 3. Inference
@@ -180,7 +194,7 @@ def predict_disease(image_input, model_path="ml/models/best_model.pth", class_js
         logits = model(tensor)
         probabilities = F.softmax(logits, dim=1).squeeze(0)
 
-    # 4. Top 3 Predictions
+    # 4. Top 3 Predictions & Ambiguity Analysis
     top3_prob, top3_indices = torch.topk(probabilities, k=min(3, num_classes))
     top3_list = []
     for p, idx in zip(top3_prob, top3_indices):
@@ -198,6 +212,30 @@ def predict_disease(image_input, model_path="ml/models/best_model.pth", class_js
     class_id = primary["class_id"]
     is_healthy = primary["is_healthy"]
 
+    # Calculate Margin & Ambiguity between Top 1 and Top 2
+    top1_conf = primary["confidence"]
+    top2_conf = top3_list[1]["confidence"] if len(top3_list) > 1 else 0.0
+    margin = round(top1_conf - top2_conf, 2)
+    is_ambiguous = margin < 12.0
+
+    # Output State: SUPPORTED / HIGH CONFIDENCE, SUPPORTED / LOW CONFIDENCE, or UNCERTAIN
+    if is_ambiguous:
+        reliability = "UNCERTAIN"
+        reliability_label = "UNCERTAIN — RETAKE OR UPLOAD A CLEARER IMAGE"
+        uncertainty_reason = f"Ambiguous prediction between {primary['disease']} ({top1_conf}%) and {top3_list[1]['disease']} ({top2_conf}%). Retake a clearer photo."
+    elif top1_conf >= 75.0 and margin >= 15.0:
+        reliability = "HIGH_CONFIDENCE"
+        reliability_label = "SUPPORTED / HIGH CONFIDENCE"
+        uncertainty_reason = None
+    elif top1_conf >= 50.0:
+        reliability = "LOW_CONFIDENCE"
+        reliability_label = "SUPPORTED / LOW CONFIDENCE"
+        uncertainty_reason = "Moderate confidence. Inspect foliage closely."
+    else:
+        reliability = "UNCERTAIN"
+        reliability_label = "UNCERTAIN — RETAKE OR UPLOAD A CLEARER IMAGE"
+        uncertainty_reason = "Model confidence is low. Please capture a clearer leaf photo."
+
     # 5. Lookup Remedy
     remedy_info = REMEDIES_KNOWLEDGE_BASE.get(class_id, {
         "symptoms": f"Visible leaf abnormalities consistent with {primary['disease']}.",
@@ -211,6 +249,11 @@ def predict_disease(image_input, model_path="ml/models/best_model.pth", class_js
         "disease": primary["disease"],
         "severity": "None" if is_healthy else ("High" if primary["confidence"] > 85 else "Medium"),
         "confidence": primary["confidence"],
+        "reliability": reliability,
+        "reliability_label": reliability_label,
+        "is_ambiguous": is_ambiguous,
+        "margin": margin,
+        "uncertainty_reason": uncertainty_reason,
         "raw_class": class_id,
         "is_healthy": is_healthy,
         "symptoms": remedy_info["symptoms"],
@@ -232,22 +275,25 @@ def main():
     args = parser.parse_args()
 
     print("=" * 70)
-    print("  AgroAI: Leaf Disease Prediction")
+    print("  AgroAI: Leaf Disease Prediction (Reliability Safe)")
     print("=" * 70)
     print(f"[*] Input Image: {args.image}")
 
     try:
         res = predict_disease(args.image, model_path=args.model_path, class_json_path=args.class_names, device=args.device)
         print("\n[+] DIAGNOSTIC RESULT:")
-        print(f"  Crop:        {res['crop']}")
-        print(f"  Condition:   {res['disease']}")
-        print(f"  Confidence:  {res['confidence']}%")
-        print(f"  Severity:    {res['severity']}")
-        print(f"  Symptoms:    {res['symptoms']}")
-        print(f"  Organic:     {res['organic_remedy']}")
-        print(f"  Chemical:    {res['chemical_remedy']}")
-        print(f"  Prevention:  {res['prevention']}")
-        print("\n[+] TOP 3 CANDIDATES:")
+        print(f"  Crop:         {res['crop']}")
+        print(f"  Condition:    {res['disease']}")
+        print(f"  AI Confidence:{res['confidence']}%")
+        print(f"  Reliability:  {res['reliability_label']}")
+        if res["is_ambiguous"]:
+            print(f"  [!] Warning:  Prediction is ambiguous (margin {res['margin']}%)")
+        print(f"  Severity:     {res['severity']}")
+        print(f"  Symptoms:     {res['symptoms']}")
+        print(f"  Organic:      {res['organic_remedy']}")
+        print(f"  Chemical:     {res['chemical_remedy']}")
+        print(f"  Prevention:   {res['prevention']}")
+        print("\n[+] TOP CANDIDATES:")
         for idx, cand in enumerate(res["top_3"], 1):
             print(f"  {idx}. {cand['crop']} - {cand['disease']} ({cand['confidence']}%)")
         print("=" * 70)

@@ -1,15 +1,32 @@
 const AI_API_KEY = import.meta.env.VITE_AI_API_KEY;
 import { processLocally } from './localAnalysis';
+import { checkImageQuality } from '../utils/imageQuality';
+import { evaluateReliability, SUPPORTED_CROPS } from '../utils/supportedClasses';
 
 let lastApiCallTime = 0;
 
 export async function analyzeImage(imageUrl, language = 'en', mode = 'plant') {
-  // Use local fallback immediately if no key provided
+  // 1. Mandatory Pre-Inference Image Quality Check
+  const quality = await checkImageQuality(imageUrl, mode);
+  if (!quality.isUsable) {
+    return {
+      isValidCrop: false,
+      isQualityIssue: true,
+      reason: quality.reason,
+      message: quality.message || 'Image quality is too low for reliable analysis.',
+      subMessage: quality.subMessage || 'Please capture a clearer photo.',
+      guidance: quality.guidance || 'Please provide a clear crop leaf photo.',
+      disease: 'Detection failed',
+      confidence: 0
+    };
+  }
+
+  // 2. Use local fallback immediately if no valid Gemini key provided
   if (!AI_API_KEY || AI_API_KEY === 'your_grok_api_key_here' || AI_API_KEY === 'your_groq_api_key_here') {
     return processLocally(imageUrl, language, mode);
   }
 
-  // Rate limiting helper
+  // 3. Rate limiting helper (avoid rapid bursts)
   const now = Date.now();
   if (now - lastApiCallTime < 4500) {
     console.log("Using offline analysis mode due to rate limiting");
@@ -28,36 +45,46 @@ export async function analyzeImage(imageUrl, language = 'en', mode = 'plant') {
   };
   const targetLanguage = languageNames[language] || 'English';
 
-  const systemInstruction = `You are an expert agricultural AI specializing in precise plant disease detection and crop identification.
+  const systemInstruction = `You are an expert agricultural AI specializing in reliable, safe plant disease identification.
 
-Your job is to analyze the image and make a rigorous evaluation based ON VISIBLE EVIDENCE ONLY.
+IMPORTANT SCOPE & RELIABILITY RULES:
+The AgroAI model is trained on the 38 PlantVillage classes covering exactly these 14 crops:
+${SUPPORTED_CROPS.join(', ')}.
 
-STEP 1: Identify the SPECIFIC Plant or Crop Name (e.g., "Apple Tree", "Paddy/Rice", "Oleander", "Tomato", etc.). Do not say "Approx. Crop".
-STEP 2: Carefully inspect for ANY disease symptoms:
-- Spots (brown, black, yellow, orange, or rust-colored)
-- Holes, pest damage, or bite marks
-- Leaf discoloration, yellowing (chlorosis), or browning (necrosis)
-- Dryness, wilting, curling, or shriveling
-- Fungal patterns, white/gray powder, or patches
-- Any abnormalities on leaves, stems, or flowers
+DO NOT claim universal plant recognition or certainty for crops outside this list.
+DO NOT use exaggerated certainty numbers such as 100% or 99%.
+DO NOT claim "guaranteed diagnosis" or "definitely correct".
 
-STEP 3: DECISION LOGIC (MANDATORY):
-- If the plant is entirely green/normal with NO symptoms → Health Status: "Healthy", Disease Name: "Healthy".
-- If the image contains vibrant healthy flowers (like pink Oleander) and healthy green leaves → Health Status: "Healthy", Disease Name: "Healthy".
-- If you see ANY clear spots, discoloration, or damage → Health Status: "Diseased", Disease Name: "[Specific Disease Name, e.g., 'Rust', 'Leaf Spot', 'Blight']". DO NOT say healthy if spots exist. 
+INSPECTION PROCEDURE:
+1. Examine visible symptoms only: leaf spots, chlorosis (yellowing), necrosis, blight lesions, rust pustules, powdery mildew, curling, or healthy green foliage.
+2. Determine if the crop is in the 14 supported crops: ${SUPPORTED_CROPS.join(', ')}.
+   - If YES, match to the closest condition among the 38 PlantVillage classes.
+   - If NO, specify the crop name honestly, set "isSupportedCrop": false, and assign a conservative confidence (<= 45%).
+3. Calculate TOP PREDICTIONS (top 2 or 3 candidates with respective percentage estimates summing realistically).
+   - If top 1 and top 2 are close in confidence (margin < 15%), mark "isAmbiguous": true.
+4. Output state must be one of:
+   - "HIGH_CONFIDENCE" (supported crop, confidence >= 75%, clear unambiguous symptoms)
+   - "LOW_CONFIDENCE" (supported crop, confidence 50-74%, or moderate symptoms)
+   - "UNCERTAIN" (unsupported crop, or confidence < 50%, or ambiguous candidates)
 
-STEP 4: Respond strictly with VALID JSON matching exactly this structure (no markdown tags):
+Respond strictly with VALID JSON matching this structure:
 {
   "isValidCrop": true,
   "isSoil": false,
   "multiLeaf": false,
-  "crop": "Specific Crop Name",
-  "disease": "Specific Disease Name or 'Healthy'",
+  "crop": "Crop Name",
+  "disease": "Disease Name or 'Healthy'",
+  "isSupportedCrop": true,
   "severity": "Low/Medium/High or 'Healthy'",
-  "symptoms": "Detailed observations of what you see",
-  "remedy": "Actionable solutions",
-  "prevention": "Preventive measures",
-  "confidence": 95,
+  "symptoms": "Detailed objective visual observations",
+  "remedy": "Actionable agronomic treatment",
+  "prevention": "Practical preventative care",
+  "confidence": 78,
+  "topPredictions": [
+    { "crop": "Crop Name", "disease": "Primary Condition", "confidence": 78 },
+    { "crop": "Crop Name", "disease": "Alternative Condition", "confidence": 18 }
+  ],
+  "isAmbiguous": false,
   "soilType": "",
   "characteristics": "",
   "suitableCrops": "",
@@ -75,7 +102,7 @@ Ensure the values are translated into ${targetLanguage}.`;
     // Remove prefix if exists
     const base64Data = base64Image.includes('base64,') ? base64Image.split('base64,')[1] : base64Image;
 
-    // Use Gemini Vision REST API
+    // Call Gemini Vision REST API
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${AI_API_KEY}`, {
       method: 'POST',
       headers: {
@@ -100,7 +127,7 @@ Ensure the values are translated into ${targetLanguage}.`;
     });
 
     if (!response.ok) {
-      console.warn(`AI API Failed with status ${response.status}. Oh no! The API key might be invalid (e.g. using a Groq key for Gemini). Using local fallback.`);
+      console.warn(`AI API Failed with status ${response.status}. Using local fallback.`);
       return processLocally(imageUrl, language, mode);
     }
 
@@ -112,13 +139,12 @@ Ensure the values are translated into ${targetLanguage}.`;
       return processLocally(imageUrl, language, mode);
     }
 
-    // Try to parse JSON output
+    // Parse JSON output
     let result;
     try {
       const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, content];
       result = JSON.parse(jsonMatch[1].trim());
     } catch(e) {
-      // Direct parsing fallback if no markdown wrappers
       try {
         result = JSON.parse(content.trim());
       } catch(err) {
@@ -126,22 +152,45 @@ Ensure the values are translated into ${targetLanguage}.`;
       }
     }
 
+    const cropName = result.crop || 'Unknown Crop';
+    const diseaseName = result.disease || 'Healthy';
+    const rawConf = Number(result.confidence) || 75;
+    const topPreds = Array.isArray(result.topPredictions) && result.topPredictions.length > 0 
+      ? result.topPredictions 
+      : [{ crop: cropName, disease: diseaseName, confidence: rawConf }];
+
+    // Enforce rigorous safety & reliability evaluation
+    const reliabilityEval = evaluateReliability({
+      confidence: rawConf,
+      crop: cropName,
+      disease: diseaseName,
+      topPredictions: topPreds,
+      isSupported: result.isSupportedCrop !== false
+    });
+
     return {
       isValidCrop: typeof result.isValidCrop === 'boolean' ? result.isValidCrop : true,
       isSoil: !!result.isSoil,
       multiLeaf: !!result.multiLeaf,
-      crop: result.crop || 'Unknown Crop',
-      severity: result.severity || 'Unknown',
-      disease: result.disease || 'Healthy',
-      symptoms: result.symptoms || 'Analysis Complete',
-      remedy: result.remedy || 'Consult a local agricultural expert',
-      prevention: result.prevention || 'Practice good crop management',
+      crop: cropName,
+      disease: diseaseName,
+      severity: result.severity || 'Medium',
+      symptoms: result.symptoms || 'Visual examination complete.',
+      remedy: result.remedy || 'Consult a certified local agricultural extension officer.',
+      prevention: result.prevention || 'Maintain good field sanitation, optimal spacing, and balanced irrigation.',
+      confidence: reliabilityEval.confidence,
+      reliability: reliabilityEval.reliability,
+      reliabilityLabel: reliabilityEval.reliabilityLabel,
+      badgeClass: reliabilityEval.badgeClass,
+      isAmbiguous: reliabilityEval.isAmbiguous,
+      uncertaintyReason: reliabilityEval.warning,
+      topPredictions: topPreds,
+      isSupportedCrop: result.isSupportedCrop !== false,
       soilType: result.soilType || '',
       characteristics: result.characteristics || '',
       suitableCrops: result.suitableCrops || '',
       waterRequirement: result.waterRequirement || '',
       fertilizerSuggestions: result.fertilizerSuggestions || '',
-      confidence: result.confidence || 85,
       isLocal: false
     };
 
