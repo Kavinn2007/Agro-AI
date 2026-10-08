@@ -67,7 +67,7 @@ export default function MobileHeader() {
               aria-expanded={langMenuOpen}
             >
               <Globe size={14} />
-              <span>{languageLabels[language] || 'EN'}</span>
+              <span>{LANGUAGE_LABELS[language] || 'EN'}</span>
             </button>
 
             {langMenuOpen && (
@@ -78,7 +78,7 @@ export default function MobileHeader() {
                   aria-hidden="true" 
                 />
                 <div className="lang-dropdown-menu" role="menu">
-                  {languagesList.map((l) => (
+                  {LANGUAGES_LIST.map((l) => (
                     <button
                       key={l.code}
                       role="menuitem"

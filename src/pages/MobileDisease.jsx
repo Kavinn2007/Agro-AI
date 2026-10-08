@@ -178,6 +178,14 @@ export default function MobileDisease() {
       return;
     }
 
+    let textToRead = '';
+    const reliabilityText = result.reliabilityLabel ? `Status: ${result.reliabilityLabel}.` : '';
+    if (result.disease === 'Healthy') {
+      textToRead = `AI Prediction: ${result.crop || 'Plant'} is healthy. Confidence: ${result.confidence || 75}%. ${reliabilityText}`;
+    } else {
+      textToRead = `AI Prediction: ${result.crop || 'Crop'} with ${result.disease}. Confidence: ${result.confidence || 75}%. ${reliabilityText} Treatment: ${result.remedy || result.prevention || 'Consult local agricultural extension officer.'}`;
+    }
+
     const utterance = new SpeechSynthesisUtterance(textToRead);
     utterance.lang = LANG_MAP[language] || 'en-US';
     utterance.onend = () => setIsPlayingVoice(false);
