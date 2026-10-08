@@ -2,16 +2,16 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, Scan, TrendingUp, CloudSun } from 'lucide-react';
 
+const NAV_ITEMS = [
+  { id: 'home', label: 'Home', path: '/', icon: Home },
+  { id: 'disease', label: 'Disease', path: '/disease', icon: Scan },
+  { id: 'market', label: 'Market', path: '/market', icon: TrendingUp },
+  { id: 'environment', label: 'Environment', path: '/environment', icon: CloudSun },
+];
+
 export default function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const navItems = [
-    { id: 'home', label: 'Home', path: '/', icon: Home },
-    { id: 'disease', label: 'Disease', path: '/disease', icon: Scan },
-    { id: 'market', label: 'Market', path: '/market', icon: TrendingUp },
-    { id: 'environment', label: 'Environment', path: '/environment', icon: CloudSun },
-  ];
 
   const getIsActive = (path) => {
     if (path === '/') {
@@ -23,20 +23,27 @@ export default function BottomNav() {
     return location.pathname.startsWith(path);
   };
 
+  const handleNavClick = (path) => {
+    const isCurrent = getIsActive(path);
+    if (!isCurrent) {
+      navigate(path);
+      window.scrollTo(0, 0);
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
     <nav className="mobile-bottom-nav" aria-label="Mobile Navigation">
       <div className="bottom-nav-inner">
-        {navItems.map((item) => {
+        {NAV_ITEMS.map((item) => {
           const isActive = getIsActive(item.path);
           const Icon = item.icon;
 
           return (
             <button
               key={item.id}
-              onClick={() => {
-                navigate(item.path);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              onClick={() => handleNavClick(item.path)}
               className={`bottom-nav-item ${isActive ? 'active' : ''}`}
               aria-label={item.label}
               aria-current={isActive ? 'page' : undefined}
@@ -52,3 +59,4 @@ export default function BottomNav() {
     </nav>
   );
 }
+

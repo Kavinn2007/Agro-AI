@@ -3,6 +3,24 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { Globe } from 'lucide-react';
 
+const LANGUAGE_LABELS = {
+  en: 'EN',
+  ta: 'தமிழ்',
+  hi: 'हिंदी',
+  te: 'తెలుగు',
+  kn: 'ಕನ್ನಡ',
+  ml: 'മലയാളം'
+};
+
+const LANGUAGES_LIST = [
+  { code: 'en', label: 'English' },
+  { code: 'ta', label: 'தமிழ்' },
+  { code: 'hi', label: 'हिंदी' },
+  { code: 'te', label: 'తెలుగు' },
+  { code: 'kn', label: 'ಕನ್ನಡ' },
+  { code: 'ml', label: 'മലയാളം' }
+];
+
 export default function MobileHeader() {
   const { language, setLanguage } = useLanguage();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -19,34 +37,17 @@ export default function MobileHeader() {
     };
   }, []);
 
-  const languageLabels = {
-    en: 'EN',
-    ta: 'தமிழ்',
-    hi: 'हिंदी',
-    te: 'తెలుగు',
-    kn: 'ಕನ್ನಡ',
-    ml: 'മലയാളം'
-  };
-
-  const languagesList = [
-    { code: 'en', label: 'English' },
-    { code: 'ta', label: 'தமிழ்' },
-    { code: 'hi', label: 'हिंदी' },
-    { code: 'te', label: 'తెలుగు' },
-    { code: 'kn', label: 'ಕನ್ನಡ' },
-    { code: 'ml', label: 'മലയാളം' }
-  ];
-
   return (
     <header className="mobile-app-header">
       <div className="mobile-header-inner">
         {/* Brand */}
         <Link to="/" className="mobile-header-brand" aria-label="AgroAI Home">
           <div className="mobile-logo-wrap">
-            <img src="/logo.png" alt="AgroAI Logo" />
+            <img src="/logo.png" alt="AgroAI Logo" width="28" height="28" loading="eager" />
           </div>
           <span className="mobile-brand-title">AGRO AI</span>
         </Link>
+
 
         {/* Header Actions */}
         <div className="mobile-header-actions">

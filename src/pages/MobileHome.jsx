@@ -3,32 +3,32 @@ import { useNavigate } from 'react-router-dom';
 import { Scan, TrendingUp, CloudSun, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+const CORE_FEATURES = [
+  {
+    id: 'disease',
+    title: 'Disease Detection',
+    subtitle: 'AI leaf diagnosis & remedies',
+    path: '/disease',
+    icon: Scan,
+  },
+  {
+    id: 'market',
+    title: 'Market',
+    subtitle: 'Real-time Mandi wholesale rates',
+    path: '/market',
+    icon: TrendingUp,
+  },
+  {
+    id: 'environment',
+    title: 'Environment',
+    subtitle: 'Local weather & climate insights',
+    path: '/environment',
+    icon: CloudSun,
+  },
+];
+
 export default function MobileHome() {
   const navigate = useNavigate();
-
-  const coreFeatures = [
-    {
-      id: 'disease',
-      title: 'Disease Detection',
-      subtitle: 'AI leaf diagnosis & remedies',
-      path: '/disease',
-      icon: Scan,
-    },
-    {
-      id: 'market',
-      title: 'Market',
-      subtitle: 'Real-time Mandi wholesale rates',
-      path: '/market',
-      icon: TrendingUp,
-    },
-    {
-      id: 'environment',
-      title: 'Environment',
-      subtitle: 'Local weather & climate insights',
-      path: '/environment',
-      icon: CloudSun,
-    },
-  ];
 
   return (
     <div className="mobile-page-content mobile-home-screen">
@@ -37,7 +37,7 @@ export default function MobileHome() {
       </div>
 
       <div className="home-actions-list">
-        {coreFeatures.map((feature, idx) => {
+        {CORE_FEATURES.map((feature, idx) => {
           const Icon = feature.icon;
           return (
             <motion.div
@@ -45,9 +45,9 @@ export default function MobileHome() {
               className="home-action-card"
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate(feature.path)}
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.08, duration: 0.28, ease: 'easeOut' }}
+              transition={{ delay: idx * 0.04, duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
@@ -57,6 +57,7 @@ export default function MobileHome() {
               }}
               aria-label={`Open ${feature.title}`}
             >
+
               <div className="action-card-left">
                 <div className="action-icon-wrap">
                   <Icon size={24} />

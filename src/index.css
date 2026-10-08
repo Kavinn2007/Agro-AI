@@ -57,20 +57,30 @@ html, body {
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
   overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: auto;
 }
 
-button {
+button, [role="button"] {
   font-family: inherit;
   border: none;
   background: none;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), opacity 0.12s ease;
+}
+
+button:active:not(:disabled), [role="button"]:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 input, select, textarea {
   font-family: inherit;
 }
+
 
 img {
   max-width: 100%;
@@ -119,6 +129,9 @@ img {
 }
 
 @media (max-width: 480px) {
+  .desktop-ambient-glow {
+    display: none;
+  }
   .mobile-app-container {
     max-width: 100%;
     border-left: none;
@@ -132,11 +145,13 @@ img {
   position: sticky;
   top: 0;
   z-index: 900;
-  background: rgba(5, 20, 11, 0.94);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(5, 20, 11, 0.96);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--green-border);
+  transform: translateZ(0);
 }
+
 
 .mobile-header-inner {
   height: 54px;
@@ -262,6 +277,37 @@ img {
   padding-bottom: calc(72px + env(safe-area-inset-bottom, 12px));
 }
 
+.route-page-container {
+  animation: routePageEnter 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
+
+@keyframes routePageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.disease-view-enter {
+  animation: diseaseViewEnter 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes diseaseViewEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .mobile-page-content {
   padding: 1.25rem 1rem;
 }
@@ -280,13 +326,13 @@ img {
   position: fixed;
   bottom: 0;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateZ(0) translateX(-50%);
   width: 100%;
   max-width: 440px;
   z-index: 950;
   background: rgba(3, 14, 8, 0.96);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-top: 1px solid var(--green-border);
   padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 6px));
 }
@@ -294,7 +340,7 @@ img {
 @media (max-width: 480px) {
   .mobile-bottom-nav {
     left: 0;
-    transform: none;
+    transform: translateZ(0);
     max-width: 100%;
   }
 }
@@ -314,7 +360,15 @@ img {
   gap: 3px;
   padding: 6px 2px;
   color: #8daea0;
-  transition: color 0.16s ease;
+  transition: color 0.15s ease, transform 0.12s cubic-bezier(0.2, 0, 0, 1);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.bottom-nav-item:active {
+  transform: scale(0.94);
 }
 
 .bottom-nav-item.active {
@@ -329,7 +383,7 @@ img {
 }
 
 .bottom-nav-icon {
-  transition: transform 0.15s ease;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .bottom-nav-item.active .bottom-nav-icon {
@@ -340,11 +394,13 @@ img {
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.02em;
+  transition: font-weight 0.15s ease;
 }
 
 .bottom-nav-item.active .bottom-nav-label {
   font-weight: 700;
 }
+
 
 /* =========================================================
    HOME SCREEN
@@ -382,7 +438,6 @@ img {
   cursor: pointer;
   box-shadow: var(--shadow-sm);
   transition: border-color 0.16s ease, transform 0.12s ease;
-  will-change: transform;
 }
 
 .home-action-card:hover {
@@ -460,12 +515,12 @@ img {
   cursor: pointer;
   box-shadow: var(--shadow-sm);
   transition: border-color 0.16s ease, transform 0.12s ease;
-  will-change: transform;
 }
 
 .disease-input-card:hover {
   border-color: var(--green-border-hover);
 }
+
 
 .disease-input-icon-wrap {
   width: 48px;
@@ -686,12 +741,15 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), background 0.15s ease;
 }
 
 .camera-flip-btn:hover {
   background: rgba(34, 197, 94, 0.2);
-  transform: rotate(180deg);
+}
+
+.camera-flip-btn:active {
+  transform: rotate(180deg) scale(0.94);
 }
 
 .camera-shutter-btn {
@@ -703,11 +761,11 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.12s ease;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .camera-shutter-btn:active {
-  transform: scale(0.92);
+  transform: scale(0.94);
 }
 
 .shutter-inner-ring {
@@ -749,6 +807,12 @@ img {
   display: block;
   image-rendering: -webkit-optimize-contrast;
   image-rendering: high-quality;
+  animation: fadeInImg 0.2s ease-out;
+}
+
+@keyframes fadeInImg {
+  0% { opacity: 0; transform: scale(0.99); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 .clean-preview-overlay-actions {
@@ -773,11 +837,15 @@ img {
   font-weight: 600;
   padding: 6px 14px;
   border-radius: 999px;
-  transition: background 0.15s;
+  transition: background 0.15s ease, transform 0.12s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .clean-preview-pill-btn:hover {
   background: rgba(14, 45, 27, 0.95);
+}
+
+.clean-preview-pill-btn:active {
+  transform: scale(0.95);
 }
 
 .clean-preview-pill-btn.danger {
@@ -800,7 +868,7 @@ img {
   border-radius: 14px;
   letter-spacing: 0.03em;
   box-shadow: 0 4px 18px rgba(34, 197, 94, 0.35);
-  transition: transform 0.12s, box-shadow 0.12s;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.12s ease;
 }
 
 .clean-analyze-btn:active {
@@ -820,18 +888,21 @@ img {
 }
 
 .clean-spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid rgba(74, 222, 128, 0.2);
+  width: 32px;
+  height: 32px;
+  border: 2.5px solid rgba(74, 222, 128, 0.15);
   border-top-color: var(--green-bright);
+  border-right-color: rgba(74, 222, 128, 0.5);
   border-radius: 50%;
-  animation: cleanSpin 0.8s linear infinite;
+  animation: cleanSpin 0.75s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+  transform: translateZ(0);
 }
 
 @keyframes cleanSpin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
 
 .clean-loading-text {
   font-size: 0.9rem;
@@ -1031,8 +1102,12 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), background 0.15s ease, color 0.15s ease;
   flex-shrink: 0;
+}
+
+.clean-voice-btn:active {
+  transform: scale(0.94);
 }
 
 .clean-voice-btn.active {
@@ -1138,12 +1213,17 @@ img {
   font-size: 0.9rem;
   padding: 12px;
   border-radius: 12px;
-  transition: background 0.15s;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), background 0.15s ease;
 }
 
 .clean-action-btn:hover {
   background: rgba(34, 197, 94, 0.24);
 }
+
+.clean-action-btn:active {
+  transform: scale(0.98);
+}
+
 
 /* =========================================================
    FEATURE 2 — MARKET SCREEN
@@ -1206,7 +1286,7 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.18s ease;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), background 0.16s ease, border-color 0.16s ease;
   flex-shrink: 0;
 }
 
@@ -1217,7 +1297,7 @@ img {
 }
 
 .market-refresh-btn:active {
-  transform: scale(0.92);
+  transform: scale(0.95);
 }
 
 .market-refresh-btn.is-spinning svg {
@@ -1312,15 +1392,18 @@ img {
   border: 1px solid var(--green-border);
   border-radius: 16px;
   margin-top: 0.5rem;
+  animation: diseaseViewEnter 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .market-loading-spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid rgba(74, 222, 128, 0.16);
+  border: 2.5px solid rgba(74, 222, 128, 0.15);
   border-top-color: var(--green-bright);
+  border-right-color: rgba(74, 222, 128, 0.5);
   border-radius: 50%;
-  animation: cleanSpin 0.75s linear infinite;
+  animation: cleanSpin 0.75s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+  transform: translateZ(0);
 }
 
 .market-error-icon {
@@ -1350,10 +1433,15 @@ img {
   padding: 9px 24px;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), opacity 0.15s ease;
 }
 
 .market-retry-btn:hover {
   opacity: 0.95;
+}
+
+.market-retry-btn:active {
+  transform: scale(0.97);
 }
 
 /* Commodity Cards */
@@ -1361,6 +1449,7 @@ img {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  animation: diseaseViewEnter 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .clean-market-card {
@@ -1369,8 +1458,7 @@ img {
   border-radius: 16px;
   padding: 1rem 1.15rem;
   box-shadow: var(--shadow-sm);
-  transition: border-color 0.15s ease;
-  will-change: transform;
+  transition: border-color 0.15s ease, transform 0.12s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .clean-market-card:hover {
@@ -1482,7 +1570,7 @@ img {
   font-size: 0.82rem;
   padding: 9px 22px;
   border-radius: 12px;
-  transition: all 0.16s ease;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), background 0.16s ease, border-color 0.16s ease;
 }
 
 .market-load-more-btn:hover {
@@ -1490,6 +1578,11 @@ img {
   border-color: var(--green-bright);
   color: var(--white);
 }
+
+.market-load-more-btn:active {
+  transform: scale(0.98);
+}
+
 
 /* =========================================================
    FEATURE 3 — ENVIRONMENT SCREEN
@@ -1515,6 +1608,7 @@ img {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   position: relative;
   overflow: hidden;
+  animation: diseaseViewEnter 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .env-permission-box {
@@ -1568,7 +1662,7 @@ img {
   max-width: 280px;
   min-height: 48px;
   box-shadow: 0 6px 20px rgba(34, 197, 94, 0.32);
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.16s ease;
 }
 
 .env-primary-btn:hover {
@@ -1591,13 +1685,17 @@ img {
   padding: 12px 28px;
   border-radius: 12px;
   min-height: 46px;
-  transition: all 0.16s ease;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), background 0.16s ease, border-color 0.16s ease;
 }
 
 .env-secondary-btn:hover {
   background: rgba(34, 197, 94, 0.22);
   border-color: var(--green-bright);
   color: var(--white);
+}
+
+.env-secondary-btn:active {
+  transform: scale(0.98);
 }
 
 .env-radar-wrap {
@@ -1677,6 +1775,7 @@ img {
   flex-direction: column;
   gap: 1rem;
   padding: 0.5rem 0;
+  animation: diseaseViewEnter 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .env-skeleton-hero {
@@ -1691,15 +1790,25 @@ img {
 }
 
 .shimmer-effect {
-  background: linear-gradient(90deg, rgba(74, 222, 128, 0.05) 25%, rgba(74, 222, 128, 0.14) 50%, rgba(74, 222, 128, 0.05) 75%);
-  background-size: 200% 100%;
-  animation: envShimmer 1.8s infinite;
+  position: relative;
+  overflow: hidden;
+  background: rgba(74, 222, 128, 0.06);
   border-radius: 8px;
 }
 
-@keyframes envShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+.shimmer-effect::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(74, 222, 128, 0.14) 50%, transparent 100%);
+  animation: envShimmerGpu 1.4s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes envShimmerGpu {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 .env-sk-location {
@@ -1752,6 +1861,7 @@ img {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  animation: diseaseViewEnter 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .env-header-row {
@@ -1798,7 +1908,7 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), background 0.16s ease, border-color 0.16s ease;
   flex-shrink: 0;
 }
 
@@ -1809,12 +1919,13 @@ img {
 }
 
 .env-refresh-btn:active:not(:disabled) {
-  transform: scale(0.92);
+  transform: scale(0.95);
 }
 
 .env-refresh-btn.is-spinning svg {
   animation: cleanSpin 0.75s linear infinite;
 }
+
 
 .env-refresh-banner {
   background: rgba(34, 197, 94, 0.1);

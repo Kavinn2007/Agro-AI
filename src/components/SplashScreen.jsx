@@ -5,10 +5,10 @@ export default function SplashScreen({ onComplete }) {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    // Keep splash short and fast
+    // Keep splash short and fast (850ms)
     const timer = setTimeout(() => {
       setVisible(false);
-    }, 1100);
+    }, 850);
 
     return () => clearTimeout(timer);
   }, []);
@@ -19,8 +19,9 @@ export default function SplashScreen({ onComplete }) {
         <motion.div
           className="agro-splash-screen"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: 0.3 } }}
-          exit={{ opacity: 0, transition: { duration: 0.3 } }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
           style={{
             position: 'fixed',
             inset: 0,
@@ -38,8 +39,13 @@ export default function SplashScreen({ onComplete }) {
           }}
         >
           <motion.h1
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1, transition: { duration: 0.35, ease: 'easeOut' } }}
+            initial={{ opacity: 0, scale: 0.94 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.04 }}
+            transition={{
+              duration: 0.3,
+              ease: [0.16, 1, 0.3, 1],
+            }}
             style={{
               margin: 0,
               padding: 0,
@@ -51,6 +57,7 @@ export default function SplashScreen({ onComplete }) {
               lineHeight: 1,
               textAlign: 'center',
               textTransform: 'uppercase',
+              willChange: 'transform, opacity',
             }}
           >
             AGRO AI
@@ -60,3 +67,4 @@ export default function SplashScreen({ onComplete }) {
     </AnimatePresence>
   );
 }
+

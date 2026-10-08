@@ -21,7 +21,17 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+const LANG_MAP = {
+  en: 'en-US',
+  ta: 'ta-IN',
+  hi: 'hi-IN',
+  te: 'te-IN',
+  kn: 'kn-IN',
+  ml: 'ml-IN'
+};
+
 export default function MobileDisease() {
+
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { language } = useLanguage();
@@ -168,31 +178,15 @@ export default function MobileDisease() {
       return;
     }
 
-    const langMap = {
-      en: 'en-US',
-      ta: 'ta-IN',
-      hi: 'hi-IN',
-      te: 'te-IN',
-      kn: 'kn-IN',
-      ml: 'ml-IN'
-    };
-
-    let textToRead = '';
-    const reliabilityText = result.reliabilityLabel ? `Status: ${result.reliabilityLabel}.` : '';
-    if (result.disease === 'Healthy') {
-      textToRead = `AI Prediction: ${result.crop || 'Plant'} is healthy. Confidence: ${result.confidence || 75}%. ${reliabilityText}`;
-    } else {
-      textToRead = `AI Prediction: ${result.crop || 'Crop'} with ${result.disease}. Confidence: ${result.confidence || 75}%. ${reliabilityText} Treatment: ${result.remedy || result.prevention || 'Consult local agricultural extension officer.'}`;
-    }
-
     const utterance = new SpeechSynthesisUtterance(textToRead);
-    utterance.lang = langMap[language] || 'en-US';
+    utterance.lang = LANG_MAP[language] || 'en-US';
     utterance.onend = () => setIsPlayingVoice(false);
     utterance.onerror = () => setIsPlayingVoice(false);
 
     window.speechSynthesis.speak(utterance);
     setIsPlayingVoice(true);
   };
+
 
   return (
     <div className="mobile-page-content mobile-disease-screen">
@@ -219,7 +213,7 @@ export default function MobileDisease() {
           STAGE 1: THREE PRIMARY INPUT METHODS (SELECT VIEW)
           ==================================================== */}
       {currentView === 'select' && (
-        <div className="disease-input-options-container">
+        <div className="disease-input-options-container disease-view-enter">
           {/* Option 1: UPLOAD PHOTO */}
           <motion.div
             className="disease-input-card"
@@ -290,7 +284,7 @@ export default function MobileDisease() {
           STAGE 2: LIVE CAMERA VIEWFINDER
           ==================================================== */}
       {currentView === 'live-camera' && (
-        <div className="live-camera-wrapper">
+        <div className="live-camera-wrapper disease-view-enter">
           <Camera
             onCapture={handleLiveCameraCapture}
             onCancel={() => setCurrentView('select')}
@@ -302,12 +296,13 @@ export default function MobileDisease() {
           STAGE 3: IMAGE PREVIEW & ACTIONS (ANALYZE / REPLACE / REMOVE)
           ==================================================== */}
       {currentView === 'preview' && previewUrl && (
-        <div className="clean-preview-wrapper">
+        <div className="clean-preview-wrapper disease-view-enter">
           <div className="clean-preview-box">
             <img 
               src={previewUrl} 
               alt="Crop Leaf Preview" 
               className="clean-preview-img" 
+              decoding="async"
             />
             <div className="clean-preview-overlay-actions">
               <button 
@@ -363,7 +358,7 @@ export default function MobileDisease() {
           STAGE 4: AI RESULT SCREEN (SAFE & RESPONSIBLE)
           ==================================================== */}
       {currentView === 'result' && result && (
-        <div className="clean-result-container">
+        <div className="clean-result-container disease-view-enter">
           {!result.isValidCrop ? (
             <div className="clean-result-card error">
               <AlertCircle size={32} className="result-error-icon" />
@@ -389,9 +384,10 @@ export default function MobileDisease() {
               {/* Photo Banner */}
               {previewUrl && (
                 <div className="clean-result-img-box">
-                  <img src={previewUrl} alt="Analyzed Plant" className="clean-result-img" />
+                  <img src={previewUrl} alt="Analyzed Plant" className="clean-result-img" decoding="async" />
                 </div>
               )}
+
 
               {/* Detected Condition & Confidence Header */}
               <div className="clean-result-header">
