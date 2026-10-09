@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, Scan, TrendingUp, CloudSun } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const NAV_ITEMS = [
   { id: 'home', label: 'Home', path: '/', icon: Home },
@@ -8,6 +9,14 @@ const NAV_ITEMS = [
   { id: 'market', label: 'Market', path: '/market', icon: TrendingUp },
   { id: 'environment', label: 'Environment', path: '/environment', icon: CloudSun },
 ];
+
+const TAB_INDEX = {
+  '/': 0,
+  '/disease': 1,
+  '/dashboard': 1,
+  '/market': 2,
+  '/environment': 3,
+};
 
 export default function BottomNav() {
   const location = useLocation();
@@ -26,7 +35,30 @@ export default function BottomNav() {
   const handleNavClick = (path) => {
     const isCurrent = getIsActive(path);
     if (!isCurrent) {
-      navigate(path);
+      const currentTab = TAB_INDEX[location.pathname] ?? 0;
+      const targetTab = TAB_INDEX[path] ?? 0;
+      const direction = targetTab >= currentTab ? 'forward' : 'backward';
+
+      if (typeof document !== 'undefined' && 'startViewTransition' in document && typeof document.startViewTransition === 'function') {
+        document.documentElement.dataset.navDirection = direction;
+        try {
+          const transition = document.startViewTransition(() => {
+            navigate(path);
+          });
+          transition.finished
+            .catch(() => {})
+            .finally(() => {
+              if (document.documentElement.dataset.navDirection === direction) {
+                delete document.documentElement.dataset.navDirection;
+              }
+            });
+        } catch {
+          delete document.documentElement.dataset.navDirection;
+          navigate(path);
+        }
+      } else {
+        navigate(path);
+      }
       window.scrollTo(0, 0);
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -48,10 +80,28 @@ export default function BottomNav() {
               aria-label={item.label}
               aria-current={isActive ? 'page' : undefined}
             >
-              <div className="bottom-nav-icon-wrapper">
-                <Icon size={20} className="bottom-nav-icon" />
+              {isActive && (
+                <motion.div
+                  layoutId="activeTabIndicator"
+                  className="bottom-nav-active-pill"
+                  transition={{
+                    type: 'spring',
+                    stiffness: 440,
+                    damping: 34,
+                    mass: 0.65,
+                  }}
+                />
+              )}
+              <div className="bottom-nav-item-content">
+                <div className="bottom-nav-icon-wrapper">
+                  <Icon
+                    size={20}
+                    className="bottom-nav-icon"
+                    strokeWidth={isActive ? 2.25 : 1.75}
+                  />
+                </div>
+                <span className="bottom-nav-label">{item.label}</span>
               </div>
-              <span className="bottom-nav-label">{item.label}</span>
             </button>
           );
         })}

@@ -30,6 +30,29 @@ const CORE_FEATURES = [
 export default function MobileHome() {
   const navigate = useNavigate();
 
+  const handleNavigate = (path) => {
+    if (typeof document !== 'undefined' && 'startViewTransition' in document && typeof document.startViewTransition === 'function') {
+      document.documentElement.dataset.navDirection = 'forward';
+      try {
+        const transition = document.startViewTransition(() => {
+          navigate(path);
+        });
+        transition.finished
+          .catch(() => {})
+          .finally(() => {
+            if (document.documentElement.dataset.navDirection === 'forward') {
+              delete document.documentElement.dataset.navDirection;
+            }
+          });
+      } catch {
+        delete document.documentElement.dataset.navDirection;
+        navigate(path);
+      }
+    } else {
+      navigate(path);
+    }
+  };
+
   return (
     <div className="mobile-page-content mobile-home-screen">
       <div className="home-hero-section">
@@ -48,7 +71,7 @@ export default function MobileHome() {
               key={feature.id}
               className="home-action-card"
               whileTap={{ scale: 0.98 }}
-              onClick={() => navigate(feature.path)}
+              onClick={() => handleNavigate(feature.path)}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.04, duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
@@ -56,7 +79,7 @@ export default function MobileHome() {
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
-                  navigate(feature.path);
+                  handleNavigate(feature.path);
                 }
               }}
               aria-label={`Open ${feature.title}`}

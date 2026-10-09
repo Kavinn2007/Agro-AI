@@ -21,14 +21,16 @@ const TAB_INDEX = {
 
 function AppRoutes() {
   const location = useLocation();
-  const prevTabRef = React.useRef(TAB_INDEX[location.pathname] ?? 0);
+  const prevTabRef = React.useRef(null);
   const currentTab = TAB_INDEX[location.pathname] ?? 0;
 
   let transitionClass = 'slide-fade';
-  if (currentTab > prevTabRef.current) {
-    transitionClass = 'slide-left';
+  if (prevTabRef.current === null) {
+    transitionClass = 'slide-initial';
+  } else if (currentTab > prevTabRef.current) {
+    transitionClass = 'slide-forward';
   } else if (currentTab < prevTabRef.current) {
-    transitionClass = 'slide-right';
+    transitionClass = 'slide-backward';
   }
 
   React.useEffect(() => {
