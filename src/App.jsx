@@ -11,11 +11,32 @@ import MobileDisease from './pages/MobileDisease';
 import MobileMarket from './pages/MobileMarket';
 import MobileEnvironment from './pages/MobileEnvironment';
 
+const TAB_INDEX = {
+  '/': 0,
+  '/disease': 1,
+  '/dashboard': 1,
+  '/market': 2,
+  '/environment': 3,
+};
+
 function AppRoutes() {
   const location = useLocation();
+  const prevTabRef = React.useRef(TAB_INDEX[location.pathname] ?? 0);
+  const currentTab = TAB_INDEX[location.pathname] ?? 0;
+
+  let transitionClass = 'slide-fade';
+  if (currentTab > prevTabRef.current) {
+    transitionClass = 'slide-left';
+  } else if (currentTab < prevTabRef.current) {
+    transitionClass = 'slide-right';
+  }
+
+  React.useEffect(() => {
+    prevTabRef.current = currentTab;
+  }, [currentTab]);
 
   return (
-    <div key={location.pathname} className="route-page-container">
+    <div key={location.pathname} className={`route-page-container ${transitionClass}`}>
       <Routes location={location}>
         {/* Primary 4 Destinations */}
         <Route path="/" element={<MobileHome />} />
