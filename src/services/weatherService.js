@@ -7,7 +7,7 @@
 
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes client cache
 const DEFAULT_WEATHER_API = 'https://api.open-meteo.com/v1/forecast';
-const WEATHER_API_BASE = import.meta.env.VITE_WEATHER_API_URL || DEFAULT_WEATHER_API;
+const WEATHER_API_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_WEATHER_API_URL) || DEFAULT_WEATHER_API;
 
 /**
  * Maps WMO Weather Interpretation Codes (WW) to human condition and icon identifiers.
@@ -174,9 +174,9 @@ export async function getWeatherData(latitude, longitude, { forceRefresh = false
   const cacheKey = `agroai_weather_${latitude.toFixed(2)}_${longitude.toFixed(2)}`;
 
   // 1. Check client-side cache
-  if (!forceRefresh) {
+  if (!forceRefresh && typeof window !== 'undefined' && window.localStorage) {
     try {
-      const cachedRaw = localStorage.getItem(cacheKey);
+      const cachedRaw = window.localStorage.getItem(cacheKey);
       if (cachedRaw) {
         const cached = JSON.parse(cachedRaw);
         const age = Date.now() - (cached.timestamp || 0);
@@ -193,19 +193,24 @@ export async function getWeatherData(latitude, longitude, { forceRefresh = false
   }
 
   // 2. Fetch fresh real-time weather with timeout
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 12000);
+  const weatherController = new AbortController();
+  const weatherTimeoutId = setTimeout(() => weatherController.abort(), 15000);
+
+  // Isolate reverse geocoding to its own timeout so reverse geocode latency never fails weather
+  const geoController = new AbortController();
+  const geoTimeoutId = setTimeout(() => geoController.abort(), 6000);
 
   try {
     const weatherUrl = `${WEATHER_API_BASE}?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&wind_speed_unit=kmh`;
 
-    // Fetch weather and reverse geocoding in parallel
+    // Fetch weather and reverse geocoding safely in parallel
     const [weatherRes, locationName] = await Promise.all([
-      fetch(weatherUrl, { signal: controller.signal }),
-      reverseGeocodeCoords(latitude, longitude, controller.signal)
+      fetch(weatherUrl, { signal: weatherController.signal }),
+      reverseGeocodeCoords(latitude, longitude, geoController.signal).catch(() => `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`)
     ]);
 
-    clearTimeout(timeoutId);
+    clearTimeout(weatherTimeoutId);
+    clearTimeout(geoTimeoutId);
 
     if (!weatherRes.ok) {
       throw new Error(`Weather service returned status ${weatherRes.status}`);
@@ -246,18 +251,21 @@ export async function getWeatherData(latitude, longitude, { forceRefresh = false
     };
 
     // 3. Cache result
-    try {
-      localStorage.setItem(cacheKey, JSON.stringify({
-        weather: result,
-        timestamp: Date.now()
-      }));
-    } catch (cacheErr) {
-      console.warn('[WeatherService] Cache write error:', cacheErr);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        window.localStorage.setItem(cacheKey, JSON.stringify({
+          weather: result,
+          timestamp: Date.now()
+        }));
+      } catch (cacheErr) {
+        console.warn('[WeatherService] Cache write error:', cacheErr);
+      }
     }
 
     return result;
   } catch (err) {
-    clearTimeout(timeoutId);
+    clearTimeout(weatherTimeoutId);
+    clearTimeout(geoTimeoutId);
     console.error('[WeatherService] Fetch error:', err);
     throw err;
   }

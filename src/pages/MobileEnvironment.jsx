@@ -52,6 +52,7 @@ export default function MobileEnvironment() {
    * - 'DENIED'
    * - 'UNAVAILABLE'
    * - 'TIMEOUT'
+   * - 'UNSUPPORTED'
    * - 'WEATHER_LOADING'
    * - 'WEATHER_ERROR'
    * - 'WEATHER_SUCCESS'
@@ -61,6 +62,22 @@ export default function MobileEnvironment() {
   const [weather, setWeather] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState('');
+
+  const weatherRef = React.useRef(weather);
+  weatherRef.current = weather;
+
+  const isLocatingRef = React.useRef(false);
+  const activeRequestIdRef = React.useRef(0);
+  const isMountedRef = React.useRef(true);
+
+  React.useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      activeRequestIdRef.current += 1;
+      isLocatingRef.current = false;
+    };
+  }, []);
 
   // Fetch real weather data for given coordinates
   const loadWeather = useCallback(async (latitude, longitude, isManualRefresh = false) => {
@@ -73,57 +90,116 @@ export default function MobileEnvironment() {
 
     try {
       const data = await getWeatherData(latitude, longitude, { forceRefresh: isManualRefresh });
+      if (!isMountedRef.current) return;
       setWeather(data);
       setPermissionState('WEATHER_SUCCESS');
       setRefreshError('');
     } catch (err) {
+      if (!isMountedRef.current) return;
       console.error('[MobileEnvironment] Weather fetch error:', err);
-      if (isManualRefresh && weather) {
+      if (isManualRefresh && weatherRef.current) {
         setRefreshError('Could not refresh weather right now');
       } else {
         setPermissionState('WEATHER_ERROR');
       }
     } finally {
-      setRefreshing(false);
+      if (isMountedRef.current) {
+        setRefreshing(false);
+      }
     }
-  }, [weather]);
+  }, []);
 
   // Request browser geolocation strictly upon user interaction
   const handleAllowLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setPermissionState('UNAVAILABLE');
+    if (!isMountedRef.current) return;
+    if (isLocatingRef.current) return; // Prevent simultaneous duplicate requests
+
+    if (
+      typeof window === 'undefined' ||
+      !navigator ||
+      !navigator.geolocation ||
+      typeof navigator.geolocation.getCurrentPosition !== 'function'
+    ) {
+      setPermissionState('UNSUPPORTED');
       return;
     }
+
+    isLocatingRef.current = true;
+    const currentRequestId = ++activeRequestIdRef.current;
 
     setPermissionState('GRANTING');
     setRefreshError('');
 
+    // High accuracy acquisition options: reasonable 20s timeout, allows 1m cached position
+    const HIGH_ACCURACY_OPTIONS = {
+      enableHighAccuracy: true,
+      timeout: 20000,
+      maximumAge: 60000
+    };
+
+    // Controlled fallback options: standard network location with 15s timeout
+    const FALLBACK_OPTIONS = {
+      enableHighAccuracy: false,
+      timeout: 15000,
+      maximumAge: 60000
+    };
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        if (!isMountedRef.current || activeRequestIdRef.current !== currentRequestId) {
+          return;
+        }
+        isLocatingRef.current = false;
         const { latitude, longitude } = position.coords;
         setCoords({ latitude, longitude });
         loadWeather(latitude, longitude, false);
       },
       (error) => {
-        console.warn('[MobileEnvironment] Geolocation error:', error.code, error.message);
-        if (error.code === 1) {
-          // PERMISSION_DENIED
-          setPermissionState('DENIED');
-        } else if (error.code === 2) {
-          // POSITION_UNAVAILABLE
-          setPermissionState('UNAVAILABLE');
-        } else if (error.code === 3) {
-          // TIMEOUT
-          setPermissionState('TIMEOUT');
-        } else {
-          setPermissionState('UNAVAILABLE');
+        if (!isMountedRef.current || activeRequestIdRef.current !== currentRequestId) {
+          return;
         }
+        console.warn('[MobileEnvironment] High-accuracy geolocation attempt failed:', error.code, error.message);
+
+        // If user denied permission (code 1: PERMISSION_DENIED), do not make fallback attempt
+        if (error.code === 1) {
+          isLocatingRef.current = false;
+          setPermissionState('DENIED');
+          return;
+        }
+
+        // If high-accuracy timed out (code 3: TIMEOUT) or position unavailable (code 2: POSITION_UNAVAILABLE):
+        // Make controlled fallback attempt with enableHighAccuracy: false
+        console.info('[MobileEnvironment] Attempting fallback with low-accuracy network location...');
+
+        navigator.geolocation.getCurrentPosition(
+          (fallbackPosition) => {
+            if (!isMountedRef.current || activeRequestIdRef.current !== currentRequestId) {
+              return;
+            }
+            isLocatingRef.current = false;
+            const { latitude, longitude } = fallbackPosition.coords;
+            setCoords({ latitude, longitude });
+            loadWeather(latitude, longitude, false);
+          },
+          (fallbackError) => {
+            if (!isMountedRef.current || activeRequestIdRef.current !== currentRequestId) {
+              return;
+            }
+            isLocatingRef.current = false;
+            console.warn('[MobileEnvironment] Fallback geolocation attempt failed:', fallbackError.code, fallbackError.message);
+
+            if (fallbackError.code === 1) {
+              setPermissionState('DENIED');
+            } else if (fallbackError.code === 3) {
+              setPermissionState('TIMEOUT');
+            } else {
+              setPermissionState('UNAVAILABLE');
+            }
+          },
+          FALLBACK_OPTIONS
+        );
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
+      HIGH_ACCURACY_OPTIONS
     );
   }, [loadWeather]);
 
@@ -176,13 +252,29 @@ export default function MobileEnvironment() {
 
           <h3 className="env-state-title">Requesting Location</h3>
           <p className="env-state-sub">
-            Detecting device GPS coordinates...
+            Acquiring device coordinates...
           </p>
         </div>
       )}
 
       {/* ========================================================
-          STATE 3: DENIED (Permission denied)
+          STATE 3: UNSUPPORTED (Browser does not support geolocation)
+          ======================================================== */}
+      {permissionState === 'UNSUPPORTED' && (
+        <div className="env-state-card env-error-box" role="alert">
+          <div className="env-error-icon-wrap">
+            <AlertCircle size={38} className="env-error-icon" />
+          </div>
+
+          <h3 className="env-state-title">Geolocation Unsupported</h3>
+          <p className="env-state-sub">
+            Your browser does not support geolocation. Please use a modern browser that supports location services to view local weather.
+          </p>
+        </div>
+      )}
+
+      {/* ========================================================
+          STATE 4: DENIED (Permission denied)
           ======================================================== */}
       {permissionState === 'DENIED' && (
         <div className="env-state-card env-error-box" role="alert">
@@ -190,9 +282,9 @@ export default function MobileEnvironment() {
             <AlertCircle size={38} className="env-error-icon" />
           </div>
 
-          <h3 className="env-state-title">Permission Required</h3>
+          <h3 className="env-state-title">Location Permission Denied</h3>
           <p className="env-state-sub">
-            Location access is required to show local weather.
+            Location access was denied. Please enable location permissions for this site in your browser settings to view local weather.
           </p>
 
           <button
@@ -207,7 +299,7 @@ export default function MobileEnvironment() {
       )}
 
       {/* ========================================================
-          STATE 4: UNAVAILABLE (Position unavailable)
+          STATE 5: UNAVAILABLE (Position unavailable)
           ======================================================== */}
       {permissionState === 'UNAVAILABLE' && (
         <div className="env-state-card env-error-box" role="alert">
@@ -217,7 +309,7 @@ export default function MobileEnvironment() {
 
           <h3 className="env-state-title">Location Unavailable</h3>
           <p className="env-state-sub">
-            Unable to determine your location. Please check your device location settings.
+            Unable to determine your location. Please check your device location settings and try again.
           </p>
 
           <button
@@ -232,7 +324,7 @@ export default function MobileEnvironment() {
       )}
 
       {/* ========================================================
-          STATE 5: TIMEOUT (Geolocation timeout)
+          STATE 6: TIMEOUT (Geolocation timeout)
           ======================================================== */}
       {permissionState === 'TIMEOUT' && (
         <div className="env-state-card env-error-box" role="alert">
@@ -242,7 +334,7 @@ export default function MobileEnvironment() {
 
           <h3 className="env-state-title">Location Request Timed Out</h3>
           <p className="env-state-sub">
-            Unable to acquire GPS signal. Please check your network and try again.
+            Unable to acquire location signal within the time limit. Please check your network and GPS connection and try again.
           </p>
 
           <button
